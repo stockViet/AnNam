@@ -72,6 +72,9 @@ h2{font-size:20px;margin:0 0 14px;color:var(--navy)}
  #products td:nth-child(4){grid-column:1/3;display:flex;gap:7px;flex-wrap:wrap;margin-top:7px;order:4}
  #products .action-btn{flex:1;min-width:64px;margin:0;padding:9px 7px}
 }
+
+.mobile-record-list{display:none}.record-card{border:1px solid #e5edf4;border-radius:14px;padding:12px;margin-bottom:10px;background:#fff}.record-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.record-title{font-weight:850;color:#082f53;overflow-wrap:anywhere}.record-price{font-weight:900;color:#082f53;white-space:nowrap}.record-meta{font-size:12px;color:#607184;margin-top:5px;line-height:1.45}.record-actions{display:flex;gap:7px;margin-top:10px}.record-actions .action-btn{flex:1;margin:0}.record-card.cancelled{opacity:.58}
+@media(max-width:800px){.mobile-record-list{display:block}.desktop-table{display:none!important}}
 @media(min-width:900px){.product-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}.product{min-height:82px;padding:11px}.product-name{font-size:14px}.price{font-size:14px}}
 @media print{body *{visibility:hidden}.modal,.modal *{visibility:visible}.modal{position:absolute;inset:0;background:#fff;padding:0}.modal-box{max-width:none;width:100%;box-shadow:none}.modal-actions{display:none}}
 </style>
@@ -132,7 +135,7 @@ h2{font-size:20px;margin:0 0 14px;color:var(--navy)}
    <input class="field" id="orderFrom" type="date" aria-label="Từ ngày">
    <input class="field" id="orderTo" type="date" aria-label="Đến ngày">
  </div>
- <div class="table-wrap"><table><thead><tr><th>Mã</th><th>Thời gian</th><th>Khách</th><th>Tổng tiền</th><th></th></tr></thead><tbody id="orderTable"></tbody></table></div></div>
+ <div id="orderCards" class="mobile-record-list"></div><div class="desktop-table table-wrap"><table><thead><tr><th>Mã</th><th>Thời gian</th><th>Khách</th><th>Tổng tiền</th><th></th></tr></thead><tbody id="orderTable"></tbody></table></div></div>
 </section>
 
 <section id="products" class="page">
@@ -142,7 +145,7 @@ h2{font-size:20px;margin:0 0 14px;color:var(--navy)}
   <select class="field" id="newCategory"><option>Cơm rang</option><option>Mỳ cay</option><option>Mỳ trộn</option><option>Ăn vặt</option></select>
   <button id="addProductBtn" class="login-btn">+ THÊM MÓN</button>
  </div>
- <div class="card"><div class="table-wrap"><table><thead><tr><th>Tên món</th><th>Nhóm</th><th>Giá</th><th></th></tr></thead><tbody id="productTable"></tbody></table></div></div>
+ <div class="card"><div id="productCards" class="mobile-record-list"></div><div class="desktop-table table-wrap"><table><thead><tr><th>Tên món</th><th>Nhóm</th><th>Giá</th><th></th></tr></thead><tbody id="productTable"></tbody></table></div></div>
 </section>
 
 <section id="customers" class="page">
@@ -388,6 +391,10 @@ function renderOrders(){
    const text=[o.id,o.phone,o.customerName].some(v=>String(v||"").toLocaleLowerCase("vi").includes(q));
    return text&&(!from||key>=from)&&(!to||key<=to);
  });
+ $("orderCards").innerHTML=list.length?list.map(o=>`<div class="record-card ${o.status==="cancelled"?"cancelled":""}"><div class="record-top"><div><div class="record-title">${new Date(o.time).toLocaleString("vi-VN")}</div><div class="record-meta">Mã: ${safe(o.id.slice(-8))}<br>Khách: ${safe(o.phone||o.customerName||"-")}${o.status==="cancelled"?`<br><b style="color:#c93535">ĐÃ HỦY</b>`:""}</div></div><div class="record-price">${money(o.total)}</div></div><div class="record-actions"><button class="action-btn primary" data-mview="${safe(o.id)}">Xem</button>${o.status!=="cancelled"?`<button class="action-btn" data-medit="${safe(o.id)}">Sửa</button><button class="action-btn danger" data-mcancel="${safe(o.id)}">Hủy</button>`:""}</div></div>`).join(""):`<div class="empty">Chưa có hóa đơn.</div>`;
+ $("orderCards").querySelectorAll("[data-mview]").forEach(b=>b.addEventListener("click",()=>{const o=orders.find(x=>x.id===b.dataset.mview);if(o)showReceipt(o)}));
+ $("orderCards").querySelectorAll("[data-mcancel]").forEach(b=>b.addEventListener("click",()=>cancelOrder(b.dataset.mcancel)));
+ $("orderCards").querySelectorAll("[data-medit]").forEach(b=>b.addEventListener("click",()=>editOrder(b.dataset.medit)));
  $("orderTable").innerHTML=list.length?list.map(o=>`<tr style="${o.status==="cancelled"?"opacity:.55":""}"><td>${safe(o.id.slice(-8))}${o.status==="cancelled"?`<br><small style="color:#c93535;font-weight:800">ĐÃ HỦY</small>`:""}</td><td>${new Date(o.time).toLocaleString("vi-VN")}</td><td>${safe(o.phone||o.customerName||"-")}</td><td><strong>${money(o.total)}</strong></td><td><button class="action-btn primary" data-view="${safe(o.id)}">Xem</button>${o.status!=="cancelled"?`<button class="action-btn" data-editorder="${safe(o.id)}">Sửa</button><button class="action-btn danger" data-cancel="${safe(o.id)}">Hủy</button>`:""}</td></tr>`).join(""):`<tr><td colspan="5" class="empty">Chưa có hóa đơn.</td></tr>`;
  $("orderTable").querySelectorAll("[data-view]").forEach(b=>b.addEventListener("click",()=>{const o=orders.find(x=>x.id===b.dataset.view);if(o)showReceipt(o)}));
  $("orderTable").querySelectorAll("[data-cancel]").forEach(b=>b.addEventListener("click",()=>cancelOrder(b.dataset.cancel)));
@@ -435,6 +442,10 @@ async function toggleProduct(id){
  catch(e){console.error(e);alert("Không thay đổi được trạng thái món.")}
 }
 function renderProductTable(){
+ $("productCards").innerHTML=products.length?products.map(p=>`<div class="record-card ${p.active===false?"cancelled":""}"><div class="record-top"><div><div class="record-title">${safe(p.name)}</div><div class="record-meta">${safe(p.category)}${p.active===false?` · <b>Đang ẩn</b>`:""}</div></div><div class="record-price">${money(p.price)}</div></div><div class="record-actions"><button class="action-btn" data-mtoggle="${safe(p.id)}">${p.active===false?"Bật":"Ẩn"}</button><button class="action-btn" data-mpedit="${safe(p.id)}">Sửa</button><button class="action-btn danger" data-mpdelete="${safe(p.id)}">Xóa</button></div></div>`).join(""):`<div class="empty">Chưa có món.</div>`;
+ $("productCards").querySelectorAll("[data-mtoggle]").forEach(b=>b.addEventListener("click",()=>toggleProduct(b.dataset.mtoggle)));
+ $("productCards").querySelectorAll("[data-mpedit]").forEach(b=>b.addEventListener("click",()=>editProduct(b.dataset.mpedit)));
+ $("productCards").querySelectorAll("[data-mpdelete]").forEach(b=>b.addEventListener("click",()=>deleteProductById(b.dataset.mpdelete)));
  $("productTable").innerHTML=products.length?products.map(p=>`<tr style="${p.active===false?"opacity:.55":""}"><td><strong>${safe(p.name)}</strong>${p.active===false?`<br><small>Đang ẩn</small>`:""}</td><td>${safe(p.category)}</td><td>${money(p.price)}</td><td><button class="action-btn" data-toggle="${safe(p.id)}">${p.active===false?"Bật":"Ẩn"}</button><button class="action-btn" data-edit="${safe(p.id)}">Sửa</button><button class="action-btn danger" data-delete="${safe(p.id)}">Xóa</button></td></tr>`).join(""):`<tr><td colspan="4" class="empty">Chưa có món.</td></tr>`;
  $("productTable").querySelectorAll("[data-toggle]").forEach(b=>b.addEventListener("click",()=>toggleProduct(b.dataset.toggle)));
  $("productTable").querySelectorAll("[data-edit]").forEach(b=>b.addEventListener("click",()=>editProduct(b.dataset.edit)));
