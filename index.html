@@ -2,1566 +2,384 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#062b4f">
 <title>An Nam POS</title>
-
 <style>
-*{
-    box-sizing:border-box;
-    margin:0;
-    padding:0;
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
-}
-
-body{
-    background:#f4f6f8;
-    color:#222;
-}
-
-header{
-    height:64px;
-    background:#8b2f2f;
-    color:white;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    padding:0 18px;
-    position:sticky;
-    top:0;
-    z-index:20;
-}
-
-.logo{
-    font-size:22px;
-    font-weight:800;
-}
-
-.header-time{
-    font-size:13px;
-    opacity:.9;
-}
-
-nav{
-    background:white;
-    display:flex;
-    overflow-x:auto;
-    border-bottom:1px solid #ddd;
-    position:sticky;
-    top:64px;
-    z-index:19;
-}
-
-nav button{
-    border:0;
-    background:white;
-    padding:15px 18px;
-    font-size:14px;
-    white-space:nowrap;
-    cursor:pointer;
-}
-
-nav button.active{
-    color:#8b2f2f;
-    font-weight:700;
-    border-bottom:3px solid #8b2f2f;
-}
-
-.page{
-    display:none;
-    padding:15px;
-}
-
-.page.active{
-    display:block;
-}
-
-.card{
-    background:white;
-    border-radius:12px;
-    padding:15px;
-    box-shadow:0 2px 8px rgba(0,0,0,.05);
-    margin-bottom:15px;
-}
-
-h2{
-    margin-bottom:15px;
-}
-
-.search{
-    width:100%;
-    padding:13px;
-    border:1px solid #ddd;
-    border-radius:10px;
-    font-size:16px;
-    margin-bottom:12px;
-}
-
-.categories{
-    display:flex;
-    gap:8px;
-    overflow-x:auto;
-    margin-bottom:14px;
-}
-
-.categories button{
-    border:1px solid #ddd;
-    background:white;
-    border-radius:20px;
-    padding:9px 14px;
-    white-space:nowrap;
-}
-
-.categories button.active{
-    background:#8b2f2f;
-    color:white;
-    border-color:#8b2f2f;
-}
-
-.product-grid{
-    display:grid;
-    grid-template-columns:repeat(2,1fr);
-    gap:10px;
-}
-
-.product{
-    background:white;
-    border:1px solid #e7e7e7;
-    border-radius:12px;
-    padding:12px;
-    min-height:100px;
-    cursor:pointer;
-}
-
-.product-name{
-    font-weight:700;
-    line-height:1.35;
-    margin-bottom:8px;
-}
-
-.price{
-    color:#b42d2d;
-    font-weight:800;
-}
-
-.sale-layout{
-    display:grid;
-    grid-template-columns:1.5fr 1fr;
-    gap:15px;
-}
-
-.cart-item{
-    padding:12px 0;
-    border-bottom:1px solid #eee;
-}
-
-.cart-top{
-    display:flex;
-    justify-content:space-between;
-    gap:10px;
-}
-
-.qty{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    margin-top:8px;
-}
-
-.qty button{
-    width:30px;
-    height:30px;
-    border:0;
-    border-radius:7px;
-    font-size:18px;
-}
-
-.remove{
-    color:#c62828;
-    border:0;
-    background:none;
-}
-
-.input{
-    width:100%;
-    border:1px solid #ddd;
-    padding:11px;
-    border-radius:9px;
-    margin-top:9px;
-    font-size:15px;
-}
-
-.row{
-    display:flex;
-    justify-content:space-between;
-    margin-top:10px;
-    gap:10px;
-}
-
-.total{
-    font-size:22px;
-    font-weight:800;
-    color:#b32626;
-}
-
-.pay-btn{
-    width:100%;
-    background:#198754;
-    color:white;
-    border:0;
-    padding:15px;
-    border-radius:10px;
-    font-size:17px;
-    font-weight:700;
-    margin-top:15px;
-}
-
-.empty{
-    text-align:center;
-    color:#888;
-    padding:30px 10px;
-}
-
-table{
-    width:100%;
-    border-collapse:collapse;
-}
-
-th,td{
-    text-align:left;
-    padding:11px 7px;
-    border-bottom:1px solid #eee;
-    font-size:14px;
-}
-
-.action-btn{
-    border:0;
-    padding:7px 9px;
-    border-radius:6px;
-    margin:2px;
-}
-
-.primary{
-    background:#8b2f2f;
-    color:white;
-}
-
-.danger{
-    background:#ffe8e8;
-    color:#b00020;
-}
-
-.green{
-    color:#16803c;
-}
-
-.stats{
-    display:grid;
-    grid-template-columns:repeat(3,1fr);
-    gap:10px;
-}
-
-.stat{
-    background:white;
-    padding:15px;
-    border-radius:12px;
-    box-shadow:0 2px 8px rgba(0,0,0,.05);
-}
-
-.stat small{
-    color:#777;
-}
-
-.stat strong{
-    display:block;
-    margin-top:8px;
-    font-size:20px;
-}
-
-.modal{
-    position:fixed;
-    inset:0;
-    background:rgba(0,0,0,.45);
-    display:none;
-    align-items:center;
-    justify-content:center;
-    padding:18px;
-    z-index:100;
-}
-
-.modal.show{
-    display:flex;
-}
-
-.modal-box{
-    width:100%;
-    max-width:500px;
-    max-height:90vh;
-    overflow:auto;
-    background:white;
-    border-radius:15px;
-    padding:18px;
-}
-
-.receipt{
-    font-family:monospace;
-}
-
-.receipt h2{
-    text-align:center;
-}
-
-.receipt-center{
-    text-align:center;
-    margin-bottom:15px;
-}
-
-.receipt-line{
-    border-top:1px dashed #555;
-    margin:12px 0;
-}
-
-.close-btn{
-    width:100%;
-    border:0;
-    padding:12px;
-    border-radius:8px;
-    margin-top:10px;
-}
-
+:root{--navy:#062b4f;--blue:#0b67b2;--blue2:#eaf5ff;--bg:#f4f8fb;--text:#17212b;--muted:#6b7785;--line:#dce7ef;--green:#168a4a;--red:#c93535;--white:#fff;--shadow:0 6px 22px rgba(4,42,78,.09)}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
+button,input,select{font:inherit}button{cursor:pointer}
+.hidden{display:none!important}
+#loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:22px;background:linear-gradient(145deg,#062b4f,#0b67b2)}
+.login-card{width:min(430px,100%);background:#fff;border-radius:24px;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.login-logo{font-size:30px;font-weight:900;color:var(--navy);text-align:center}.login-sub{text-align:center;color:var(--muted);margin:6px 0 22px}
+.field{width:100%;border:1px solid var(--line);background:#fff;border-radius:12px;padding:13px 14px;margin:7px 0;font-size:16px;outline:none}
+.field:focus,.search:focus{border-color:#6eb7ef;box-shadow:0 0 0 3px rgba(11,103,178,.1)}
+.login-btn,.pay-btn{width:100%;border:0;border-radius:12px;padding:14px 16px;font-weight:800;color:#fff;background:linear-gradient(135deg,var(--navy),var(--blue));margin-top:10px}
+.login-msg{min-height:22px;margin-top:10px;text-align:center;color:var(--red);font-size:14px}
+header{min-height:68px;background:linear-gradient(135deg,var(--navy),#084b82);color:#fff;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 16px;position:sticky;top:0;z-index:30;box-shadow:0 4px 18px rgba(4,42,78,.18)}
+.logo{font-size:22px;font-weight:900;letter-spacing:.4px}.header-time{font-size:12px;opacity:.88;margin-top:3px}.head-right{text-align:right;font-size:12px}.logout{border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.12);color:#fff;border-radius:9px;padding:7px 10px;margin-top:4px}
+nav{background:#fff;display:grid;grid-template-columns:repeat(5,1fr);border-bottom:1px solid var(--line);position:sticky;top:68px;z-index:25}
+nav button{border:0;background:#fff;padding:12px 4px;font-size:12px;color:#536171;border-bottom:3px solid transparent;min-width:0}
+nav button.active{color:var(--blue);font-weight:800;border-bottom-color:var(--blue);background:#f8fcff}
+.page{display:none;padding:14px;max-width:1400px;margin:auto}.page.active{display:block}
+.sale-layout{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(320px,.8fr);gap:14px}
+.card{background:#fff;border:1px solid #e8f0f5;border-radius:16px;padding:15px;box-shadow:var(--shadow);margin-bottom:14px}
+h2{font-size:20px;margin:0 0 14px;color:var(--navy)}
+.search{width:100%;padding:13px 14px;border:1px solid var(--line);border-radius:13px;background:#fff;font-size:16px;outline:none;margin-bottom:11px}
+.categories{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:11px;scrollbar-width:none}.categories::-webkit-scrollbar{display:none}
+.categories button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:9px 14px;white-space:nowrap;color:#435466}
+.categories button.active{background:var(--navy);border-color:var(--navy);color:#fff}
+.product-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.product{position:relative;background:#fff;border:1px solid var(--line);border-radius:15px;padding:13px;min-height:104px;box-shadow:0 2px 10px rgba(5,49,85,.04);transition:transform .12s ease,background .12s,border-color .12s,box-shadow .12s;user-select:none;-webkit-tap-highlight-color:transparent}
+.product:active,.product.pressed{transform:scale(.96);background:var(--blue2);border-color:#69b5ee;box-shadow:0 0 0 3px rgba(11,103,178,.1)}
+.product-name{font-weight:800;line-height:1.35;margin-bottom:10px}.price{color:var(--blue);font-weight:900}
+.cart-card{position:sticky;top:128px}.cart-item{padding:12px 0;border-bottom:1px solid #edf2f6}.cart-top,.row{display:flex;justify-content:space-between;gap:10px;align-items:center}.qty{display:flex;align-items:center;gap:10px;margin-top:9px}.qty button{width:34px;height:34px;border:1px solid var(--line);background:#f7fafc;border-radius:9px;font-size:19px}.remove{border:0;background:none;color:var(--red);font-weight:700}
+.total{font-size:23px;font-weight:900;color:var(--navy)}.pay-btn{background:linear-gradient(135deg,#168a4a,#1ca75a);font-size:16px}
+.empty{text-align:center;color:#85919c;padding:28px 10px}
+.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:11px 8px;border-bottom:1px solid #edf2f6;font-size:14px;white-space:nowrap}th{color:#526273;background:#f8fbfd}
+.action-btn{border:0;padding:8px 10px;border-radius:8px;margin:2px}.primary{background:var(--navy);color:#fff}.danger{background:#ffeded;color:#b51f2c}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.stat{background:#fff;border:1px solid #e8f0f5;padding:16px;border-radius:15px;box-shadow:var(--shadow)}.stat small{color:var(--muted)}.stat strong{display:block;margin-top:8px;font-size:21px;color:var(--navy)}
+.modal{position:fixed;inset:0;background:rgba(1,22,39,.56);display:none;align-items:center;justify-content:center;padding:16px;z-index:100}.modal.show{display:flex}.modal-box{width:min(560px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:18px;padding:18px}
+.receipt{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:#111}.receipt h2{text-align:center;color:#111}.receipt-center{text-align:center;margin-bottom:14px}.receipt-line{border-top:1px dashed #555;margin:12px 0}.receipt-table{width:100%}.receipt-table th,.receipt-table td{font-size:12px;padding:7px 3px;white-space:normal;background:#fff}.receipt-table th:nth-child(n+2),.receipt-table td:nth-child(n+2){text-align:right}
+.modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}.close-btn,.print-btn{border:0;padding:12px;border-radius:10px;font-weight:800}.print-btn{background:var(--navy);color:#fff}
+.toast{position:fixed;left:50%;bottom:92px;transform:translate(-50%,20px);background:#06365f;color:#fff;padding:11px 15px;border-radius:999px;box-shadow:0 8px 30px rgba(0,0,0,.22);opacity:0;pointer-events:none;transition:.2s;z-index:150;max-width:88%;text-align:center}.toast.show{opacity:1;transform:translate(-50%,0)}
+.mobile-cart{display:none;position:fixed;right:16px;bottom:18px;z-index:50;border:0;background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;border-radius:999px;padding:13px 17px;font-weight:900;box-shadow:0 8px 28px rgba(4,42,78,.32)}
+.sync{font-size:12px;color:#d9efff;margin-top:2px}
 @media(max-width:800px){
-    .sale-layout{
-        grid-template-columns:1fr;
-    }
-
-    .stats{
-        grid-template-columns:1fr;
-    }
+ .sale-layout{grid-template-columns:1fr}.cart-card{position:static}.stats{grid-template-columns:1fr}.mobile-cart{display:block}.page{padding:12px 10px 84px}
+ nav button{font-size:11px;padding:11px 2px}.product-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.product{min-height:98px}
+ .head-right{max-width:42%}
 }
-
-@media(min-width:900px){
-    .product-grid{
-        grid-template-columns:repeat(3,1fr);
-    }
-
-    .page{
-        max-width:1400px;
-        margin:auto;
-    }
-}
+@media(min-width:900px){.product-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media print{body *{visibility:hidden}.modal,.modal *{visibility:visible}.modal{position:absolute;inset:0;background:#fff;padding:0}.modal-box{max-width:none;width:100%;box-shadow:none}.modal-actions{display:none}}
 </style>
 </head>
-
 <body>
 
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">AN NAM POS</div>
+    <div class="login-sub">Đăng nhập hệ thống quản lý bán hàng</div>
+    <input id="loginEmail" class="field" type="email" autocomplete="username" placeholder="Email">
+    <input id="loginPassword" class="field" type="password" autocomplete="current-password" placeholder="Mật khẩu">
+    <button id="loginBtn" class="login-btn">ĐĂNG NHẬP</button>
+    <div id="loginMsg" class="login-msg"></div>
+  </div>
+</div>
+
+<div id="app" class="hidden">
 <header>
-    <div>
-        <div class="logo">AN NAM POS</div>
-        <div class="header-time" id="clock"></div>
-    </div>
-    <div>Quản lý bán hàng</div>
+  <div><div class="logo">AN NAM POS</div><div class="header-time" id="clock"></div><div class="sync" id="syncState">Đang kết nối dữ liệu…</div></div>
+  <div class="head-right"><div id="userEmail"></div><button id="logoutBtn" class="logout">Đăng xuất</button></div>
 </header>
 
 <nav>
-    <button class="active" onclick="showPage('sale',this)">🛒 Bán hàng</button>
-    <button onclick="showPage('orders',this)">🧾 Hóa đơn</button>
-    <button onclick="showPage('products',this)">🍜 Món ăn</button>
-    <button onclick="showPage('customers',this)">👥 Khách hàng</button>
-    <button onclick="showPage('report',this)">📊 Doanh thu</button>
+  <button class="active" data-page="sale">🛒<br>Bán hàng</button>
+  <button data-page="orders">🧾<br>Hóa đơn</button>
+  <button data-page="products">🍜<br>Món ăn</button>
+  <button data-page="customers">👥<br>Khách hàng</button>
+  <button data-page="report">📊<br>Doanh thu</button>
 </nav>
 
-<!-- BÁN HÀNG -->
-
 <section id="sale" class="page active">
-
-<div class="sale-layout">
-
-<div>
-    <input
-        class="search"
-        id="searchProduct"
-        placeholder="🔍 Tìm món..."
-        oninput="renderProducts()"
-    >
-
-    <div class="categories" id="categories"></div>
-
-    <div class="product-grid" id="productGrid"></div>
-</div>
-
-<div class="card">
-    <h2>Đơn hàng</h2>
-
-    <div id="cart"></div>
-
-    <input
-        class="input"
-        id="customerPhone"
-        placeholder="Số điện thoại khách"
-    >
-
-    <input
-        class="input"
-        id="customerName"
-        placeholder="Tên khách (không bắt buộc)"
-    >
-
-    <input
-        class="input"
-        id="discount"
-        type="number"
-        min="0"
-        placeholder="Giảm giá (đ)"
-        oninput="renderCart()"
-    >
-
-    <input
-        class="input"
-        id="note"
-        placeholder="Ghi chú đơn hàng"
-    >
-
-    <div class="row">
-        <span>Tạm tính</span>
-        <strong id="subtotal">0đ</strong>
-    </div>
-
-    <div class="row">
-        <span>Giảm giá</span>
-        <strong id="discountView">0đ</strong>
-    </div>
-
-    <div class="row">
-        <span>Khách cần trả</span>
-        <span class="total" id="grandTotal">0đ</span>
-    </div>
-
-    <button class="pay-btn" onclick="checkout()">
-        THANH TOÁN
-    </button>
-</div>
-
-</div>
-
+ <div class="sale-layout">
+  <div>
+   <input class="search" id="searchProduct" placeholder="🔍 Tìm món...">
+   <div class="categories" id="categories"></div>
+   <div class="product-grid" id="productGrid"></div>
+  </div>
+  <div class="card cart-card" id="cartCard">
+   <h2>Đơn hàng <span id="cartTitleCount"></span></h2>
+   <div id="cart"></div>
+   <input class="field" id="customerPhone" inputmode="tel" placeholder="Số điện thoại khách">
+   <input class="field" id="customerName" placeholder="Tên khách (không bắt buộc)">
+   <input class="field" id="discount" type="number" min="0" inputmode="numeric" placeholder="Giảm giá (đ)">
+   <input class="field" id="note" placeholder="Ghi chú đơn hàng">
+   <div class="row"><span>Tạm tính</span><strong id="subtotal">0đ</strong></div>
+   <div class="row"><span>Giảm giá</span><strong id="discountView">0đ</strong></div>
+   <div class="row"><span>Khách cần trả</span><span class="total" id="grandTotal">0đ</span></div>
+   <button id="checkoutBtn" class="pay-btn">THANH TOÁN</button>
+  </div>
+ </div>
 </section>
-
-<!-- HÓA ĐƠN -->
 
 <section id="orders" class="page">
-
-<div class="card">
-
-<h2>Danh sách hóa đơn</h2>
-
-<input
-    class="search"
-    id="searchOrder"
-    placeholder="Tìm mã hóa đơn hoặc SĐT..."
-    oninput="renderOrders()"
->
-
-<div style="overflow:auto">
-
-<table>
-<thead>
-<tr>
-<th>Mã</th>
-<th>Thời gian</th>
-<th>Khách</th>
-<th>Tổng tiền</th>
-<th></th>
-</tr>
-</thead>
-
-<tbody id="orderTable"></tbody>
-
-</table>
-
-</div>
-
-</div>
-
+ <div class="card"><h2>Danh sách hóa đơn</h2>
+ <input class="search" id="searchOrder" placeholder="Tìm mã hóa đơn, SĐT hoặc tên khách...">
+ <div class="table-wrap"><table><thead><tr><th>Mã</th><th>Thời gian</th><th>Khách</th><th>Tổng tiền</th><th></th></tr></thead><tbody id="orderTable"></tbody></table></div></div>
 </section>
-
-<!-- MÓN ĂN -->
 
 <section id="products" class="page">
-
-<div class="card">
-
-<h2>Quản lý món</h2>
-
-<input class="input" id="newName" placeholder="Tên món">
-
-<input class="input" id="newPrice" type="number" placeholder="Giá bán">
-
-<select class="input" id="newCategory">
-<option>Cơm rang</option>
-<option>Mỳ cay</option>
-<option>Mỳ trộn</option>
-<option>Ăn vặt</option>
-</select>
-
-<button class="pay-btn" onclick="addProduct()">
-+ THÊM MÓN
-</button>
-
-</div>
-
-<div class="card">
-
-<div style="overflow:auto">
-
-<table>
-<thead>
-<tr>
-<th>Tên món</th>
-<th>Nhóm</th>
-<th>Giá</th>
-<th></th>
-</tr>
-</thead>
-
-<tbody id="productTable"></tbody>
-
-</table>
-
-</div>
-
-</div>
-
+ <div class="card"><h2>Quản lý món</h2>
+  <input class="field" id="newName" placeholder="Tên món">
+  <input class="field" id="newPrice" type="number" inputmode="numeric" placeholder="Giá bán">
+  <select class="field" id="newCategory"><option>Cơm rang</option><option>Mỳ cay</option><option>Mỳ trộn</option><option>Ăn vặt</option></select>
+  <button id="addProductBtn" class="login-btn">+ THÊM MÓN</button>
+ </div>
+ <div class="card"><div class="table-wrap"><table><thead><tr><th>Tên món</th><th>Nhóm</th><th>Giá</th><th></th></tr></thead><tbody id="productTable"></tbody></table></div></div>
 </section>
-
-<!-- KHÁCH HÀNG -->
 
 <section id="customers" class="page">
-
-<div class="card">
-
-<h2>Khách hàng</h2>
-
-<input
-    class="search"
-    id="searchCustomer"
-    placeholder="Tìm SĐT hoặc tên khách..."
-    oninput="renderCustomers()"
->
-
-<div style="overflow:auto">
-
-<table>
-
-<thead>
-<tr>
-<th>Khách hàng</th>
-<th>SĐT</th>
-<th>Số đơn</th>
-<th>Đã mua</th>
-</tr>
-</thead>
-
-<tbody id="customerTable"></tbody>
-
-</table>
-
-</div>
-
-</div>
-
+ <div class="card"><h2>Khách hàng</h2>
+ <input class="search" id="searchCustomer" placeholder="Tìm SĐT hoặc tên khách...">
+ <div class="table-wrap"><table><thead><tr><th>Khách hàng</th><th>SĐT</th><th>Số đơn</th><th>Đã mua</th></tr></thead><tbody id="customerTable"></tbody></table></div></div>
 </section>
-
-<!-- DOANH THU -->
 
 <section id="report" class="page">
-
-<h2>Tổng quan bán hàng</h2>
-
-<div class="stats">
-
-<div class="stat">
-<small>Doanh thu hôm nay</small>
-<strong id="todayRevenue">0đ</strong>
-</div>
-
-<div class="stat">
-<small>Đơn hôm nay</small>
-<strong id="todayOrders">0</strong>
-</div>
-
-<div class="stat">
-<small>Tổng doanh thu</small>
-<strong id="allRevenue">0đ</strong>
-</div>
-
-</div>
-
-<div class="card" style="margin-top:15px">
-
-<h2>Món bán chạy</h2>
-
-<div id="bestSeller"></div>
-
-</div>
-
+ <h2>Tổng quan bán hàng</h2>
+ <div class="stats">
+  <div class="stat"><small>Doanh thu hôm nay</small><strong id="todayRevenue">0đ</strong></div>
+  <div class="stat"><small>Đơn hôm nay</small><strong id="todayOrders">0</strong></div>
+  <div class="stat"><small>Tổng doanh thu</small><strong id="allRevenue">0đ</strong></div>
+ </div>
+ <div class="card" style="margin-top:14px"><h2>Món bán chạy</h2><div id="bestSeller"></div></div>
 </section>
 
-<!-- MODAL HÓA ĐƠN -->
+<button id="mobileCart" class="mobile-cart">🛒 Giỏ hàng (0)</button>
+<div id="toast" class="toast"></div>
 
-<div class="modal" id="receiptModal">
-
-<div class="modal-box">
-
-<div id="receiptContent"></div>
-
-<button class="close-btn" onclick="closeReceipt()">
-Đóng
-</button>
-
+<div class="modal" id="receiptModal"><div class="modal-box"><div id="receiptContent"></div><div class="modal-actions"><button id="printBtn" class="print-btn">🖨 In hóa đơn</button><button id="closeReceiptBtn" class="close-btn">Đóng</button></div></div></div>
 </div>
 
-</div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+import { getFirestore, collection, doc, getDocs, setDoc, deleteDoc, onSnapshot, writeBatch } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
-<script>
+const firebaseConfig={
+ apiKey:"AIzaSyDuVZWRPAdF5eSjEAJAPN7BpBdEMJ4tE18",
+ authDomain:"annam-f20f4.firebaseapp.com",
+ projectId:"annam-f20f4",
+ storageBucket:"annam-f20f4.firebasestorage.app",
+ messagingSenderId:"441615203644",
+ appId:"1:441615203644:web:a15b397c9efcc4d5b6f239"
+};
 
-/* ==============================
-   DỮ LIỆU
-================================ */
+const fbApp=initializeApp(firebaseConfig);
+const auth=getAuth(fbApp);
+const db=getFirestore(fbApp);
 
-const defaultProducts = [
-
-{id:1,name:"Cơm Dưa Bò",price:45000,category:"Cơm rang"},
-{id:2,name:"Cơm Thịt Viên",price:40000,category:"Cơm rang"},
-{id:3,name:"Cơm Thịt Xiên Nướng",price:45000,category:"Cơm rang"},
-{id:4,name:"Cơm Gà Xối Mỡ",price:55000,category:"Cơm rang"},
-{id:5,name:"Cơm Gà Nướng",price:55000,category:"Cơm rang"},
-{id:6,name:"Cơm Bê Xào Sả Ớt",price:55000,category:"Cơm rang"},
-
-{id:7,name:"Mỳ Cay Xúc Xích",price:40000,category:"Mỳ cay"},
-{id:8,name:"Mỳ Cay Bò Mỹ",price:45000,category:"Mỳ cay"},
-{id:9,name:"Mỳ Cay Đùi Gà",price:50000,category:"Mỳ cay"},
-{id:10,name:"Mỳ Cay Bò Ta",price:50000,category:"Mỳ cay"},
-
-{id:11,name:"Mỳ Trộn Xúc Xích",price:40000,category:"Mỳ trộn"},
-{id:12,name:"Mỳ Trộn Lạp Sườn Hà Khẩu",price:40000,category:"Mỳ trộn"},
-{id:13,name:"Mỳ Trộn Trứng Thịt Viên",price:45000,category:"Mỳ trộn"},
-{id:14,name:"Mỳ Trộn Trứng Thịt Xiên",price:45000,category:"Mỳ trộn"},
-
-{id:15,name:"Xúc Xích",price:10000,category:"Ăn vặt"},
-{id:16,name:"Lạp Sườn Hà Khẩu",price:15000,category:"Ăn vặt"},
-{id:17,name:"Đùi Gà Rán",price:35000,category:"Ăn vặt"},
-{id:18,name:"Đùi Gà Sốt Phomai",price:40000,category:"Ăn vặt"},
-{id:19,name:"Khoai Tây Lắc Phomai",price:35000,category:"Ăn vặt"},
-{id:20,name:"Phomai Que 5c",price:35000,category:"Ăn vặt"},
-{id:21,name:"Nem Chua Rán 5c",price:35000,category:"Ăn vặt"},
-{id:22,name:"Nem Phomai 5c",price:40000,category:"Ăn vặt"}
-
+const defaultProducts=[
+{id:"1",name:"Cơm Dưa Bò",price:45000,category:"Cơm rang"},
+{id:"2",name:"Cơm Thịt Viên",price:40000,category:"Cơm rang"},
+{id:"3",name:"Cơm Thịt Xiên Nướng",price:45000,category:"Cơm rang"},
+{id:"4",name:"Cơm Gà Xối Mỡ",price:55000,category:"Cơm rang"},
+{id:"5",name:"Cơm Gà Nướng",price:55000,category:"Cơm rang"},
+{id:"6",name:"Cơm Bê Xào Sả Ớt",price:55000,category:"Cơm rang"},
+{id:"7",name:"Mỳ Cay Xúc Xích",price:40000,category:"Mỳ cay"},
+{id:"8",name:"Mỳ Cay Bò Mỹ",price:45000,category:"Mỳ cay"},
+{id:"9",name:"Mỳ Cay Đùi Gà",price:50000,category:"Mỳ cay"},
+{id:"10",name:"Mỳ Cay Bò Ta",price:50000,category:"Mỳ cay"},
+{id:"11",name:"Mỳ Trộn Xúc Xích",price:40000,category:"Mỳ trộn"},
+{id:"12",name:"Mỳ Trộn Lạp Sườn Hà Khẩu",price:40000,category:"Mỳ trộn"},
+{id:"13",name:"Mỳ Trộn Trứng Thịt Viên",price:45000,category:"Mỳ trộn"},
+{id:"14",name:"Mỳ Trộn Trứng Thịt Xiên",price:45000,category:"Mỳ trộn"},
+{id:"15",name:"Xúc Xích",price:10000,category:"Ăn vặt"},
+{id:"16",name:"Lạp Sườn Hà Khẩu",price:15000,category:"Ăn vặt"},
+{id:"17",name:"Đùi Gà Rán",price:35000,category:"Ăn vặt"},
+{id:"18",name:"Đùi Gà Sốt Phomai",price:40000,category:"Ăn vặt"},
+{id:"19",name:"Khoai Tây Lắc Phomai",price:35000,category:"Ăn vặt"},
+{id:"20",name:"Phomai Que 5c",price:35000,category:"Ăn vặt"},
+{id:"21",name:"Nem Chua Rán 5c",price:35000,category:"Ăn vặt"},
+{id:"22",name:"Nem Phomai 5c",price:40000,category:"Ăn vặt"}
 ];
 
-let products =
-JSON.parse(localStorage.getItem("annam_products"))
-|| defaultProducts;
+let products=[],orders=[],cart=[],currentCategory="Tất cả",unsubs=[],toastTimer;
 
-let orders =
-JSON.parse(localStorage.getItem("annam_orders"))
-|| [];
+const $=id=>document.getElementById(id);
+const money=n=>Number(n||0).toLocaleString("vi-VN")+"đ";
+const safe=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+const normalizeProduct=p=>({id:String(p.id),name:String(p.name||""),price:Number(p.price||0),category:String(p.category||"Khác")});
+const normalizeOrder=o=>({...o,id:String(o.id),time:o.time||new Date().toISOString(),subtotal:Number(o.subtotal||0),discount:Number(o.discount||0),total:Number(o.total||0),items:Array.isArray(o.items)?o.items.map(i=>({...i,id:String(i.id),price:Number(i.price||0),qty:Number(i.qty||0)})):[]});
 
-let cart=[];
+function toast(msg){$("toast").textContent=msg;$("toast").classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>$("toast").classList.remove("show"),1400)}
+function setSync(msg){$("syncState").textContent=msg}
+function updateClock(){$("clock").textContent=new Date().toLocaleString("vi-VN")}
+setInterval(updateClock,1000);updateClock();
 
-let currentCategory="Tất cả";
+$("loginBtn").addEventListener("click",login);
+$("loginPassword").addEventListener("keydown",e=>{if(e.key==="Enter")login()});
+$("logoutBtn").addEventListener("click",()=>signOut(auth));
+$("searchProduct").addEventListener("input",renderProducts);
+$("discount").addEventListener("input",renderCart);
+$("searchOrder").addEventListener("input",renderOrders);
+$("searchCustomer").addEventListener("input",renderCustomers);
+$("checkoutBtn").addEventListener("click",checkout);
+$("addProductBtn").addEventListener("click",addProduct);
+$("closeReceiptBtn").addEventListener("click",closeReceipt);
+$("printBtn").addEventListener("click",()=>window.print());
+$("mobileCart").addEventListener("click",()=>{$("cartCard").scrollIntoView({behavior:"smooth",block:"start"})});
+document.querySelectorAll("nav button").forEach(btn=>btn.addEventListener("click",()=>showPage(btn.dataset.page,btn)));
 
-
-/* ==============================
-   TIỆN ÍCH
-================================ */
-
-function money(n){
-    return Number(n || 0).toLocaleString("vi-VN")+"đ";
+async function login(){
+ const email=$("loginEmail").value.trim(),password=$("loginPassword").value;
+ $("loginMsg").textContent="";
+ if(!email||!password){$("loginMsg").textContent="Nhập email và mật khẩu.";return}
+ $("loginBtn").disabled=true;$("loginBtn").textContent="ĐANG ĐĂNG NHẬP…";
+ try{await signInWithEmailAndPassword(auth,email,password)}
+ catch(e){$("loginMsg").textContent="Không đăng nhập được. Kiểm tra lại email hoặc mật khẩu."}
+ finally{$("loginBtn").disabled=false;$("loginBtn").textContent="ĐĂNG NHẬP"}
 }
 
-function save(){
-    localStorage.setItem(
-        "annam_products",
-        JSON.stringify(products)
-    );
+onAuthStateChanged(auth,async user=>{
+ unsubs.forEach(f=>f());unsubs=[];
+ if(!user){
+  $("loginScreen").classList.remove("hidden");$("app").classList.add("hidden");products=[];orders=[];return;
+ }
+ $("loginScreen").classList.add("hidden");$("app").classList.remove("hidden");$("userEmail").textContent=user.email||"";
+ setSync("Đang đồng bộ…");
+ try{
+  await migrateLocalDataOnce(user.uid);
+  await ensureProducts();
+  subscribeData();
+ }catch(e){console.error(e);setSync("Lỗi kết nối dữ liệu");toast("Không tải được dữ liệu")}
+});
 
-    localStorage.setItem(
-        "annam_orders",
-        JSON.stringify(orders)
-    );
+async function migrateLocalDataOnce(uid){
+ const marker="annam_firebase_migrated_"+uid;
+ if(localStorage.getItem(marker)==="1")return;
+ let localProducts=[],localOrders=[];
+ try{localProducts=JSON.parse(localStorage.getItem("annam_products")||"[]")||[]}catch{}
+ try{localOrders=JSON.parse(localStorage.getItem("annam_orders")||"[]")||[]}catch{}
+ if(!localProducts.length&&!localOrders.length){localStorage.setItem(marker,"1");return}
+ const batch=writeBatch(db);
+ localProducts.forEach(p=>{p=normalizeProduct(p);batch.set(doc(db,"products",p.id),p,{merge:true})});
+ localOrders.forEach(o=>{o=normalizeOrder(o);batch.set(doc(db,"orders",o.id),o,{merge:true})});
+ await batch.commit();
+ localStorage.setItem(marker,"1");
 }
 
+async function ensureProducts(){
+ const snap=await getDocs(collection(db,"products"));
+ if(!snap.empty)return;
+ const batch=writeBatch(db);
+ defaultProducts.forEach(p=>batch.set(doc(db,"products",p.id),p));
+ await batch.commit();
+}
 
-/* ==============================
-   MENU TRANG
-================================ */
+function subscribeData(){
+ unsubs.push(onSnapshot(collection(db,"products"),snap=>{
+  products=snap.docs.map(d=>normalizeProduct({id:d.id,...d.data()})).sort((a,b)=>Number(a.id)-Number(b.id)||a.name.localeCompare(b.name,"vi"));
+  renderCategories();renderProducts();renderProductTable();setSync("● Đã đồng bộ");
+ },e=>{console.error(e);setSync("Lỗi đồng bộ món")}));
+ unsubs.push(onSnapshot(collection(db,"orders"),snap=>{
+  orders=snap.docs.map(d=>normalizeOrder({id:d.id,...d.data()})).sort((a,b)=>new Date(b.time)-new Date(a.time));
+  renderOrders();renderCustomers();renderReport();setSync("● Đã đồng bộ");
+ },e=>{console.error(e);setSync("Lỗi đồng bộ hóa đơn")}));
+}
 
 function showPage(id,btn){
-
-    document
-    .querySelectorAll(".page")
-    .forEach(p=>p.classList.remove("active"));
-
-    document
-    .querySelectorAll("nav button")
-    .forEach(b=>b.classList.remove("active"));
-
-    document
-    .getElementById(id)
-    .classList.add("active");
-
-    btn.classList.add("active");
-
-    if(id==="orders") renderOrders();
-
-    if(id==="products") renderProductTable();
-
-    if(id==="customers") renderCustomers();
-
-    if(id==="report") renderReport();
+ document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+ document.querySelectorAll("nav button").forEach(b=>b.classList.remove("active"));
+ $(id).classList.add("active");btn.classList.add("active");
+ if(id==="orders")renderOrders();if(id==="products")renderProductTable();if(id==="customers")renderCustomers();if(id==="report")renderReport();
 }
-
-
-/* ==============================
-   DANH MỤC
-================================ */
 
 function renderCategories(){
-
-    const cats=[
-        "Tất cả",
-        ...new Set(products.map(p=>p.category))
-    ];
-
-    document.getElementById("categories").innerHTML =
-    cats.map(c=>`
-        <button
-        class="${c===currentCategory?"active":""}"
-        onclick="selectCategory('${c}')">
-        ${c}
-        </button>
-    `).join("");
+ const cats=["Tất cả",...new Set(products.map(p=>p.category))];
+ if(!cats.includes(currentCategory))currentCategory="Tất cả";
+ $("categories").innerHTML=cats.map(c=>`<button class="${c===currentCategory?"active":""}" data-cat="${safe(c)}">${safe(c)}</button>`).join("");
+ $("categories").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{currentCategory=b.dataset.cat;renderCategories();renderProducts()}));
 }
-
-function selectCategory(cat){
-
-    currentCategory=cat;
-
-    renderCategories();
-
-    renderProducts();
-}
-
-
-/* ==============================
-   SẢN PHẨM
-================================ */
 
 function renderProducts(){
-
-    const q=
-    document.getElementById("searchProduct")
-    .value
-    .toLowerCase();
-
-    const list=products.filter(p=>{
-
-        const categoryOK=
-        currentCategory==="Tất cả"
-        || p.category===currentCategory;
-
-        const searchOK=
-        p.name.toLowerCase().includes(q);
-
-        return categoryOK && searchOK;
-    });
-
-    document.getElementById("productGrid").innerHTML =
-    list.length
-    ?
-    list.map(p=>`
-        <div class="product"
-        onclick="addToCart(${p.id})">
-
-            <div class="product-name">
-            ${p.name}
-            </div>
-
-            <div class="price">
-            ${money(p.price)}
-            </div>
-
-        </div>
-    `).join("")
-    :
-    `<div class="empty">Không tìm thấy món.</div>`;
+ const q=$("searchProduct").value.trim().toLocaleLowerCase("vi");
+ const list=products.filter(p=>(currentCategory==="Tất cả"||p.category===currentCategory)&&p.name.toLocaleLowerCase("vi").includes(q));
+ $("productGrid").innerHTML=list.length?list.map(p=>`<div class="product" data-id="${safe(p.id)}"><div class="product-name">${safe(p.name)}</div><div class="price">${money(p.price)}</div></div>`).join(""):`<div class="empty">Không tìm thấy món.</div>`;
+ $("productGrid").querySelectorAll(".product").forEach(el=>el.addEventListener("click",()=>addToCart(el.dataset.id,el)));
 }
 
-
-/* ==============================
-   GIỎ HÀNG
-================================ */
-
-function addToCart(id){
-
-    const product=
-    products.find(p=>p.id===id);
-
-    const item=
-    cart.find(i=>i.id===id);
-
-    if(item){
-        item.qty++;
-    }
-    else{
-        cart.push({
-            ...product,
-            qty:1
-        });
-    }
-
-    renderCart();
+function addToCart(id,el){
+ const p=products.find(x=>x.id===String(id));if(!p)return;
+ const item=cart.find(x=>x.id===p.id);if(item)item.qty++;else cart.push({...p,qty:1});
+ if(el){el.classList.add("pressed");setTimeout(()=>el.classList.remove("pressed"),180)}
+ renderCart();toast("✓ Đã thêm "+p.name);
 }
-
-function changeQty(id,amount){
-
-    const item=
-    cart.find(i=>i.id===id);
-
-    if(!item) return;
-
-    item.qty+=amount;
-
-    if(item.qty<=0){
-        cart=
-        cart.filter(i=>i.id!==id);
-    }
-
-    renderCart();
-}
-
-function removeCart(id){
-
-    cart=
-    cart.filter(i=>i.id!==id);
-
-    renderCart();
-}
+function changeQty(id,n){const i=cart.find(x=>x.id===String(id));if(!i)return;i.qty+=n;if(i.qty<=0)cart=cart.filter(x=>x.id!==String(id));renderCart()}
+function removeCart(id){cart=cart.filter(x=>x.id!==String(id));renderCart()}
 
 function renderCart(){
-
-    const box=
-    document.getElementById("cart");
-
-    if(!cart.length){
-
-        box.innerHTML=
-        `<div class="empty">
-        Chưa có món nào trong đơn
-        </div>`;
-    }
-    else{
-
-        box.innerHTML=
-        cart.map(i=>`
-
-        <div class="cart-item">
-
-            <div class="cart-top">
-
-                <strong>${i.name}</strong>
-
-                <button
-                class="remove"
-                onclick="removeCart(${i.id})">
-                Xóa
-                </button>
-
-            </div>
-
-            <div class="qty">
-
-                <button
-                onclick="changeQty(${i.id},-1)">
-                −
-                </button>
-
-                <strong>${i.qty}</strong>
-
-                <button
-                onclick="changeQty(${i.id},1)">
-                +
-                </button>
-
-                <span style="margin-left:auto">
-                ${money(i.price*i.qty)}
-                </span>
-
-            </div>
-
-        </div>
-
-        `).join("");
-    }
-
-    const subtotal=
-    cart.reduce(
-        (sum,i)=>sum+i.price*i.qty,
-        0
-    );
-
-    let discount=
-    Number(
-        document.getElementById("discount").value
-    ) || 0;
-
-    if(discount<0) discount=0;
-
-    if(discount>subtotal)
-        discount=subtotal;
-
-    const total=
-    subtotal-discount;
-
-    document.getElementById("subtotal")
-    .textContent=money(subtotal);
-
-    document.getElementById("discountView")
-    .textContent=money(discount);
-
-    document.getElementById("grandTotal")
-    .textContent=money(total);
+ $("cart").innerHTML=cart.length?cart.map(i=>`<div class="cart-item"><div class="cart-top"><strong>${safe(i.name)}</strong><button class="remove" data-remove="${safe(i.id)}">Xóa</button></div><div class="qty"><button data-minus="${safe(i.id)}">−</button><strong>${i.qty}</strong><button data-plus="${safe(i.id)}">+</button><span style="margin-left:auto">${money(i.price*i.qty)}</span></div></div>`).join(""):`<div class="empty">Chưa có món nào trong đơn</div>`;
+ $("cart").querySelectorAll("[data-minus]").forEach(b=>b.addEventListener("click",()=>changeQty(b.dataset.minus,-1)));
+ $("cart").querySelectorAll("[data-plus]").forEach(b=>b.addEventListener("click",()=>changeQty(b.dataset.plus,1)));
+ $("cart").querySelectorAll("[data-remove]").forEach(b=>b.addEventListener("click",()=>removeCart(b.dataset.remove)));
+ const count=cart.reduce((s,i)=>s+i.qty,0),subtotal=cart.reduce((s,i)=>s+i.price*i.qty,0);
+ let discount=Math.max(0,Number($("discount").value)||0);discount=Math.min(discount,subtotal);
+ $("subtotal").textContent=money(subtotal);$("discountView").textContent=money(discount);$("grandTotal").textContent=money(subtotal-discount);
+ $("mobileCart").textContent=`🛒 Giỏ hàng (${count})`;$("cartTitleCount").textContent=count?`(${count})`:"";
 }
 
-
-/* ==============================
-   THANH TOÁN
-================================ */
-
-function checkout(){
-
-    if(!cart.length){
-
-        alert("Chưa có món trong đơn.");
-
-        return;
-    }
-
-    const subtotal=
-    cart.reduce(
-        (s,i)=>s+i.price*i.qty,
-        0
-    );
-
-    let discount=
-    Number(
-        document.getElementById("discount").value
-    ) || 0;
-
-    discount=
-    Math.max(
-        0,
-        Math.min(discount,subtotal)
-    );
-
-    const total=
-    subtotal-discount;
-
-    const order={
-
-        id:"AN"+Date.now(),
-
-        time:new Date().toISOString(),
-
-        customerName:
-        document.getElementById("customerName")
-        .value.trim(),
-
-        phone:
-        document.getElementById("customerPhone")
-        .value.trim(),
-
-        note:
-        document.getElementById("note")
-        .value.trim(),
-
-        items:cart.map(i=>({...i})),
-
-        subtotal,
-
-        discount,
-
-        total
-    };
-
-    orders.unshift(order);
-
-    save();
-
-    showReceipt(order);
-
-    cart=[];
-
-    document.getElementById("customerName").value="";
-    document.getElementById("customerPhone").value="";
-    document.getElementById("discount").value="";
-    document.getElementById("note").value="";
-
-    renderCart();
+async function checkout(){
+ if(!cart.length){toast("Chưa có món trong đơn");return}
+ const subtotal=cart.reduce((s,i)=>s+i.price*i.qty,0);let discount=Math.max(0,Number($("discount").value)||0);discount=Math.min(discount,subtotal);
+ const order={id:"AN"+Date.now(),time:new Date().toISOString(),customerName:$("customerName").value.trim(),phone:$("customerPhone").value.trim(),note:$("note").value.trim(),items:cart.map(i=>({...i})),subtotal,discount,total:subtotal-discount,createdBy:auth.currentUser?.email||""};
+ $("checkoutBtn").disabled=true;$("checkoutBtn").textContent="ĐANG LƯU…";
+ try{
+  await setDoc(doc(db,"orders",order.id),order);
+  showReceipt(order);cart=[];$("customerName").value="";$("customerPhone").value="";$("discount").value="";$("note").value="";renderCart();toast("✓ Thanh toán thành công");
+ }catch(e){console.error(e);alert("Không lưu được hóa đơn. Kiểm tra mạng rồi thử lại.")}
+ finally{$("checkoutBtn").disabled=false;$("checkoutBtn").textContent="THANH TOÁN"}
 }
 
-
-/* ==============================
-   HÓA ĐƠN
-================================ */
-
-function showReceipt(order){
-
-    const date=
-    new Date(order.time);
-
-    const shortID=
-    order.id.slice(-8);
-
-    document.getElementById("receiptContent").innerHTML=`
-
-    <div class="receipt">
-
-        <h2>AN NAM</h2>
-
-        <div class="receipt-center">
-        HÓA ĐƠN BÁN HÀNG
-        <br>
-        Mã: ${shortID}
-        <br>
-        ${date.toLocaleString("vi-VN")}
-        </div>
-
-        ${
-        order.phone
-        ?
-        `<div>SĐT khách: ${order.phone}</div>`
-        :""
-        }
-
-        ${
-        order.customerName
-        ?
-        `<div>Khách: ${order.customerName}</div>`
-        :""
-        }
-
-        <div class="receipt-line"></div>
-
-        ${order.items.map(i=>`
-
-            <div>
-            <strong>${i.name}</strong>
-            </div>
-
-            <div class="row">
-            <span>
-            ${i.qty} x ${money(i.price)}
-            </span>
-
-            <span>
-            ${money(i.qty*i.price)}
-            </span>
-            </div>
-
-        `).join("")}
-
-        <div class="receipt-line"></div>
-
-        <div class="row">
-        <span>Tạm tính</span>
-        <strong>${money(order.subtotal)}</strong>
-        </div>
-
-        <div class="row">
-        <span>Giảm giá</span>
-        <strong>${money(order.discount)}</strong>
-        </div>
-
-        <div class="row">
-        <strong>THANH TOÁN</strong>
-        <strong style="font-size:20px">
-        ${money(order.total)}
-        </strong>
-        </div>
-
-        ${
-        order.note
-        ?
-        `<div style="margin-top:12px">
-        Ghi chú: ${order.note}
-        </div>`
-        :""
-        }
-
-        <div class="receipt-line"></div>
-
-        <div class="receipt-center">
-        Cảm ơn quý khách ❤️
-        </div>
-
-    </div>
-    `;
-
-    document
-    .getElementById("receiptModal")
-    .classList.add("show");
+function showReceipt(o){
+ const d=new Date(o.time);
+ $("receiptContent").innerHTML=`<div class="receipt"><h2>AN NAM</h2><div class="receipt-center"><strong>HÓA ĐƠN BÁN HÀNG</strong><br>Mã: ${safe(o.id.slice(-8))}<br>${d.toLocaleString("vi-VN")}</div>${o.customerName?`<div>Khách: ${safe(o.customerName)}</div>`:""}${o.phone?`<div>SĐT: ${safe(o.phone)}</div>`:""}<div class="receipt-line"></div><table class="receipt-table"><thead><tr><th>Món</th><th>SL</th><th>Đơn giá</th><th>Thành tiền</th></tr></thead><tbody>${o.items.map(i=>`<tr><td>${safe(i.name)}</td><td>${i.qty}</td><td>${money(i.price)}</td><td>${money(i.price*i.qty)}</td></tr>`).join("")}</tbody></table><div class="receipt-line"></div><div class="row"><span>Tạm tính</span><strong>${money(o.subtotal)}</strong></div><div class="row"><span>Giảm giá</span><strong>${money(o.discount)}</strong></div><div class="row"><strong>THANH TOÁN</strong><strong style="font-size:20px">${money(o.total)}</strong></div>${o.note?`<div style="margin-top:12px">Ghi chú: ${safe(o.note)}</div>`:""}<div class="receipt-line"></div><div class="receipt-center">Cảm ơn quý khách ❤️</div></div>`;
+ $("receiptModal").classList.add("show");
 }
-
-function closeReceipt(){
-
-    document
-    .getElementById("receiptModal")
-    .classList.remove("show");
-}
-
-
-/* ==============================
-   DANH SÁCH HÓA ĐƠN
-================================ */
+function closeReceipt(){$("receiptModal").classList.remove("show")}
 
 function renderOrders(){
-
-    const q=
-    document.getElementById("searchOrder")
-    .value.toLowerCase();
-
-    const list=
-    orders.filter(o=>
-
-        o.id.toLowerCase().includes(q)
-
-        ||
-
-        (o.phone||"")
-        .toLowerCase()
-        .includes(q)
-
-    );
-
-    document.getElementById("orderTable").innerHTML=
-
-    list.length
-
-    ?
-
-    list.map(o=>`
-
-    <tr>
-
-        <td>
-        ${o.id.slice(-8)}
-        </td>
-
-        <td>
-        ${new Date(o.time).toLocaleString("vi-VN")}
-        </td>
-
-        <td>
-        ${o.phone || o.customerName || "-"}
-        </td>
-
-        <td>
-        <strong>${money(o.total)}</strong>
-        </td>
-
-        <td>
-        <button
-        class="action-btn primary"
-        onclick="viewOrder('${o.id}')">
-        Xem
-        </button>
-        </td>
-
-    </tr>
-
-    `).join("")
-
-    :
-
-    `<tr>
-    <td colspan="5" class="empty">
-    Chưa có hóa đơn.
-    </td>
-    </tr>`;
+ const q=$("searchOrder").value.trim().toLocaleLowerCase("vi");
+ const list=orders.filter(o=>[o.id,o.phone,o.customerName].some(v=>String(v||"").toLocaleLowerCase("vi").includes(q)));
+ $("orderTable").innerHTML=list.length?list.map(o=>`<tr><td>${safe(o.id.slice(-8))}</td><td>${new Date(o.time).toLocaleString("vi-VN")}</td><td>${safe(o.phone||o.customerName||"-")}</td><td><strong>${money(o.total)}</strong></td><td><button class="action-btn primary" data-view="${safe(o.id)}">Xem</button></td></tr>`).join(""):`<tr><td colspan="5" class="empty">Chưa có hóa đơn.</td></tr>`;
+ $("orderTable").querySelectorAll("[data-view]").forEach(b=>b.addEventListener("click",()=>{const o=orders.find(x=>x.id===b.dataset.view);if(o)showReceipt(o)}));
 }
 
-function viewOrder(id){
-
-    const order=
-    orders.find(o=>o.id===id);
-
-    if(order)
-        showReceipt(order);
+async function addProduct(){
+ const name=$("newName").value.trim(),price=Number($("newPrice").value),category=$("newCategory").value;
+ if(!name||price<=0){toast("Nhập tên món và giá bán");return}
+ const p={id:String(Date.now()),name,price,category};
+ try{await setDoc(doc(db,"products",p.id),p);$("newName").value="";$("newPrice").value="";toast("✓ Đã thêm món")}
+ catch(e){console.error(e);alert("Không thêm được món.")}
 }
-
-
-/* ==============================
-   QUẢN LÝ MÓN
-================================ */
-
-function addProduct(){
-
-    const name=
-    document.getElementById("newName")
-    .value.trim();
-
-    const price=
-    Number(
-        document.getElementById("newPrice")
-        .value
-    );
-
-    const category=
-    document.getElementById("newCategory")
-    .value;
-
-    if(!name || price<=0){
-
-        alert("Nhập tên món và giá bán.");
-
-        return;
-    }
-
-    products.push({
-
-        id:Date.now(),
-
-        name,
-
-        price,
-
-        category
-    });
-
-    save();
-
-    document.getElementById("newName").value="";
-    document.getElementById("newPrice").value="";
-
-    renderProductTable();
-    renderCategories();
-    renderProducts();
+async function editProduct(id){
+ const p=products.find(x=>x.id===String(id));if(!p)return;
+ const name=prompt("Tên món:",p.name);if(name===null)return;
+ const price=prompt("Giá bán:",p.price);if(price===null)return;
+ if(!name.trim()||Number(price)<=0){toast("Thông tin không hợp lệ");return}
+ try{await setDoc(doc(db,"products",p.id),{...p,name:name.trim(),price:Number(price)});toast("✓ Đã sửa món")}
+ catch(e){console.error(e);alert("Không sửa được món.")}
 }
-
-function deleteProduct(id){
-
-    if(!confirm("Xóa món này?"))
-        return;
-
-    products=
-    products.filter(p=>p.id!==id);
-
-    save();
-
-    renderProductTable();
-    renderCategories();
-    renderProducts();
+async function deleteProductById(id){
+ if(!confirm("Xóa món này?"))return;
+ try{await deleteDoc(doc(db,"products",String(id)));toast("Đã xóa món")}
+ catch(e){console.error(e);alert("Không xóa được món.")}
 }
-
-function editProduct(id){
-
-    const p=
-    products.find(x=>x.id===id);
-
-    if(!p) return;
-
-    const newName=
-    prompt("Tên món:",p.name);
-
-    if(newName===null)
-        return;
-
-    const newPrice=
-    prompt("Giá bán:",p.price);
-
-    if(newPrice===null)
-        return;
-
-    if(
-        !newName.trim()
-        ||
-        Number(newPrice)<=0
-    ){
-
-        alert("Thông tin không hợp lệ.");
-
-        return;
-    }
-
-    p.name=newName.trim();
-
-    p.price=Number(newPrice);
-
-    save();
-
-    renderProductTable();
-    renderProducts();
-}
-
 function renderProductTable(){
-
-    document.getElementById("productTable")
-    .innerHTML=
-
-    products.map(p=>`
-
-    <tr>
-
-        <td>
-        <strong>${p.name}</strong>
-        </td>
-
-        <td>
-        ${p.category}
-        </td>
-
-        <td>
-        ${money(p.price)}
-        </td>
-
-        <td>
-
-        <button
-        class="action-btn"
-        onclick="editProduct(${p.id})">
-        Sửa
-        </button>
-
-        <button
-        class="action-btn danger"
-        onclick="deleteProduct(${p.id})">
-        Xóa
-        </button>
-
-        </td>
-
-    </tr>
-
-    `).join("");
+ $("productTable").innerHTML=products.length?products.map(p=>`<tr><td><strong>${safe(p.name)}</strong></td><td>${safe(p.category)}</td><td>${money(p.price)}</td><td><button class="action-btn" data-edit="${safe(p.id)}">Sửa</button><button class="action-btn danger" data-delete="${safe(p.id)}">Xóa</button></td></tr>`).join(""):`<tr><td colspan="4" class="empty">Chưa có món.</td></tr>`;
+ $("productTable").querySelectorAll("[data-edit]").forEach(b=>b.addEventListener("click",()=>editProduct(b.dataset.edit)));
+ $("productTable").querySelectorAll("[data-delete]").forEach(b=>b.addEventListener("click",()=>deleteProductById(b.dataset.delete)));
 }
-
-
-/* ==============================
-   KHÁCH HÀNG
-================================ */
 
 function getCustomers(){
-
-    const map={};
-
-    orders.forEach(o=>{
-
-        if(!o.phone)
-            return;
-
-        if(!map[o.phone]){
-
-            map[o.phone]={
-
-                phone:o.phone,
-
-                name:o.customerName || "",
-
-                orders:0,
-
-                spent:0
-            };
-        }
-
-        map[o.phone].orders++;
-
-        map[o.phone].spent+=o.total;
-
-        if(o.customerName)
-            map[o.phone].name=o.customerName;
-    });
-
-    return Object.values(map);
+ const map={};orders.forEach(o=>{if(!o.phone)return;if(!map[o.phone])map[o.phone]={phone:o.phone,name:o.customerName||"",orders:0,spent:0};map[o.phone].orders++;map[o.phone].spent+=o.total;if(o.customerName)map[o.phone].name=o.customerName});return Object.values(map).sort((a,b)=>b.spent-a.spent)
 }
-
 function renderCustomers(){
-
-    const q=
-    document.getElementById("searchCustomer")
-    .value.toLowerCase();
-
-    const customers=
-    getCustomers()
-    .filter(c=>
-
-        c.phone.toLowerCase().includes(q)
-
-        ||
-
-        c.name.toLowerCase().includes(q)
-
-    );
-
-    document.getElementById("customerTable")
-    .innerHTML=
-
-    customers.length
-
-    ?
-
-    customers.map(c=>`
-
-    <tr>
-
-        <td>
-        ${c.name || "Khách lẻ"}
-        </td>
-
-        <td>
-        ${c.phone}
-        </td>
-
-        <td>
-        ${c.orders}
-        </td>
-
-        <td>
-        <strong>
-        ${money(c.spent)}
-        </strong>
-        </td>
-
-    </tr>
-
-    `).join("")
-
-    :
-
-    `<tr>
-    <td colspan="4" class="empty">
-    Chưa có dữ liệu khách hàng.
-    </td>
-    </tr>`;
+ const q=$("searchCustomer").value.trim().toLocaleLowerCase("vi");
+ const list=getCustomers().filter(c=>c.phone.toLocaleLowerCase("vi").includes(q)||c.name.toLocaleLowerCase("vi").includes(q));
+ $("customerTable").innerHTML=list.length?list.map(c=>`<tr><td>${safe(c.name||"Khách lẻ")}</td><td>${safe(c.phone)}</td><td>${c.orders}</td><td><strong>${money(c.spent)}</strong></td></tr>`).join(""):`<tr><td colspan="4" class="empty">Chưa có dữ liệu khách hàng.</td></tr>`;
 }
-
-
-/* ==============================
-   BÁO CÁO
-================================ */
 
 function renderReport(){
-
-    const today=
-    new Date().toLocaleDateString("vi-VN");
-
-    const todayList=
-    orders.filter(o=>
-
-        new Date(o.time)
-        .toLocaleDateString("vi-VN")
-        === today
-    );
-
-    const todayRevenue=
-    todayList.reduce(
-        (s,o)=>s+o.total,
-        0
-    );
-
-    const allRevenue=
-    orders.reduce(
-        (s,o)=>s+o.total,
-        0
-    );
-
-    document.getElementById("todayRevenue")
-    .textContent=money(todayRevenue);
-
-    document.getElementById("todayOrders")
-    .textContent=todayList.length;
-
-    document.getElementById("allRevenue")
-    .textContent=money(allRevenue);
-
-    const sales={};
-
-    orders.forEach(o=>{
-
-        o.items.forEach(i=>{
-
-            if(!sales[i.name])
-                sales[i.name]=0;
-
-            sales[i.name]+=i.qty;
-        });
-    });
-
-    const sorted=
-    Object.entries(sales)
-    .sort((a,b)=>b[1]-a[1])
-    .slice(0,10);
-
-    document.getElementById("bestSeller")
-    .innerHTML=
-
-    sorted.length
-
-    ?
-
-    sorted.map(
-        ([name,qty],index)=>`
-
-        <div class="row"
-        style="padding:10px 0;border-bottom:1px solid #eee">
-
-        <span>
-        ${index+1}. ${name}
-        </span>
-
-        <strong>
-        ${qty} phần
-        </strong>
-
-        </div>
-
-        `
-    ).join("")
-
-    :
-
-    `<div class="empty">
-    Chưa có dữ liệu bán hàng.
-    </div>`;
+ const today=new Date().toLocaleDateString("vi-VN"),todayList=orders.filter(o=>new Date(o.time).toLocaleDateString("vi-VN")===today);
+ $("todayRevenue").textContent=money(todayList.reduce((s,o)=>s+o.total,0));$("todayOrders").textContent=todayList.length;$("allRevenue").textContent=money(orders.reduce((s,o)=>s+o.total,0));
+ const sales={};orders.forEach(o=>o.items.forEach(i=>sales[i.name]=(sales[i.name]||0)+i.qty));
+ const sorted=Object.entries(sales).sort((a,b)=>b[1]-a[1]).slice(0,10);
+ $("bestSeller").innerHTML=sorted.length?sorted.map(([n,q],i)=>`<div class="row" style="padding:10px 0;border-bottom:1px solid #edf2f6"><span>${i+1}. ${safe(n)}</span><strong>${q} phần</strong></div>`).join(""):`<div class="empty">Chưa có dữ liệu bán hàng.</div>`;
 }
 
-
-/* ==============================
-   ĐỒNG HỒ
-================================ */
-
-function updateClock(){
-
-    document.getElementById("clock")
-    .textContent=
-    new Date()
-    .toLocaleString("vi-VN");
-}
-
-setInterval(updateClock,1000);
-
-updateClock();
-
-
-/* ==============================
-   KHỞI ĐỘNG
-================================ */
-
-renderCategories();
-
-renderProducts();
-
-renderCart();
-
+renderCart();renderOrders();renderCustomers();renderReport();
 </script>
-
 </body>
 </html>
