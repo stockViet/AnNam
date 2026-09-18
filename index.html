@@ -27,8 +27,8 @@ nav button.active{color:var(--blue);font-weight:800;border-bottom-color:var(--bl
 .card{background:#fff;border:1px solid #e8f0f5;border-radius:16px;padding:15px;box-shadow:var(--shadow);margin-bottom:14px}
 h2{font-size:20px;margin:0 0 14px;color:var(--navy)}
 .search{width:100%;padding:13px 14px;border:1px solid var(--line);border-radius:13px;background:#fff;font-size:16px;outline:none;margin-bottom:11px}
-.categories{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:11px;scrollbar-width:none}.categories::-webkit-scrollbar{display:none}
-.categories button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:9px 14px;white-space:nowrap;color:#435466}
+.categories{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:11px;width:100%;overflow:hidden}
+.categories button{min-width:0;border:1px solid var(--line);background:#fff;border-radius:12px;padding:10px 5px;white-space:normal;color:#435466;font-size:13px;line-height:1.15;text-align:center}
 .categories button.active{background:var(--navy);border-color:var(--navy);color:#fff}
 .product-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
 .product{position:relative;background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px;min-height:76px;box-shadow:0 2px 10px rgba(5,49,85,.04);transition:transform .12s ease,background .12s,border-color .12s,box-shadow .12s;user-select:none;-webkit-tap-highlight-color:transparent}
@@ -334,11 +334,23 @@ function showPage(id,btn){
 }
 
 function renderCategories(){
- const fixedCats=["Cơm rang","Mỳ cay","Mỳ trộn","Ăn vặt","Cafe & Tea","Topping Đồ Ăn","Topping Nước"];
- const cats=["Tất cả",...new Set([...fixedCats,...products.map(p=>p.category)])];
- if(!cats.includes(currentCategory))currentCategory="Tất cả";
+ // 2 hàng x 3 nút để vừa màn hình điện thoại:
+ // Cơm | Mỳ | Topping Đồ Ăn
+ // Ăn Vặt | Cafe | Topping Nước
+ const cats=["Cơm","Mỳ","Topping Đồ Ăn","Ăn Vặt","Cafe","Topping Nước"];
+ if(currentCategory==="Tất cả"||!cats.includes(currentCategory)) currentCategory="Cơm";
  $("categories").innerHTML=cats.map(c=>`<button class="${c===currentCategory?"active":""}" data-cat="${safe(c)}">${safe(c)}</button>`).join("");
  $("categories").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{currentCategory=b.dataset.cat;renderCategories();renderProducts()}));
+}
+
+function categoryMatches(p,filter){
+ if(filter==="Cơm") return p.category==="Cơm rang" || p.category==="Cơm";
+ if(filter==="Mỳ") return p.category==="Mỳ cay" || p.category==="Mỳ trộn" || p.category==="Mỳ";
+ if(filter==="Ăn Vặt") return p.category==="Ăn vặt" || p.category==="Ăn Vặt";
+ if(filter==="Cafe") return p.category==="Cafe & Tea" || p.category==="Cafe";
+ if(filter==="Topping Đồ Ăn") return p.category==="Topping Đồ Ăn";
+ if(filter==="Topping Nước") return p.category==="Topping Nước";
+ return true;
 }
 
 function productPriceLabel(p){
@@ -348,7 +360,7 @@ function productPriceLabel(p){
 }
 function renderProducts(){
  const q=$("searchProduct").value.trim().toLocaleLowerCase("vi");
- const list=products.filter(p=>p.active!==false&&(currentCategory==="Tất cả"||p.category===currentCategory)&&p.name.toLocaleLowerCase("vi").includes(q));
+ const list=products.filter(p=>p.active!==false&&categoryMatches(p,currentCategory)&&p.name.toLocaleLowerCase("vi").includes(q));
  $("productGrid").innerHTML=list.length?list.map(p=>`<div class="product" data-id="${safe(p.id)}"><div class="product-name">${safe(p.name)}</div><div class="price">${safe(productPriceLabel(p))}</div>${p.category==="Cafe & Tea"&&Object.keys(p.sizes||{}).length?`<div class="product-size-note">Chọn size khi thêm</div>`:""}</div>`).join(""):`<div class="empty">Không tìm thấy món.</div>`;
  $("productGrid").querySelectorAll(".product").forEach(el=>el.addEventListener("click",()=>addToCart(el.dataset.id,el)));
 }
