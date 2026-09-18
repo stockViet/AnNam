@@ -95,6 +95,10 @@ h2{font-size:20px;margin:0 0 14px;color:var(--navy)}
    <input class="field" id="customerPhone" inputmode="tel" placeholder="Số điện thoại khách">
    <input class="field" id="customerName" placeholder="Tên khách (không bắt buộc)">
    <input class="field" id="discount" type="number" min="0" inputmode="numeric" placeholder="Giảm giá (đ)">
+   <select class="field" id="paymentMethod">
+     <option value="Tiền mặt">💵 Tiền mặt</option>
+     <option value="Chuyển khoản">🏦 Chuyển khoản</option>
+   </select>
    <input class="field" id="note" placeholder="Ghi chú đơn hàng">
    <div class="row"><span>Tạm tính</span><strong id="subtotal">0đ</strong></div>
    <div class="row"><span>Giảm giá</span><strong id="discountView">0đ</strong></div>
@@ -107,6 +111,10 @@ h2{font-size:20px;margin:0 0 14px;color:var(--navy)}
 <section id="orders" class="page">
  <div class="card"><h2>Danh sách hóa đơn</h2>
  <input class="search" id="searchOrder" placeholder="Tìm mã hóa đơn, SĐT hoặc tên khách...">
+ <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+   <input class="field" id="orderFrom" type="date" aria-label="Từ ngày">
+   <input class="field" id="orderTo" type="date" aria-label="Đến ngày">
+ </div>
  <div class="table-wrap"><table><thead><tr><th>Mã</th><th>Thời gian</th><th>Khách</th><th>Tổng tiền</th><th></th></tr></thead><tbody id="orderTable"></tbody></table></div></div>
 </section>
 
@@ -131,7 +139,16 @@ h2{font-size:20px;margin:0 0 14px;color:var(--navy)}
  <div class="stats">
   <div class="stat"><small>Doanh thu hôm nay</small><strong id="todayRevenue">0đ</strong></div>
   <div class="stat"><small>Đơn hôm nay</small><strong id="todayOrders">0</strong></div>
-  <div class="stat"><small>Tổng doanh thu</small><strong id="allRevenue">0đ</strong></div>
+  <div class="stat"><small>Doanh thu tháng này</small><strong id="monthRevenue">0đ</strong></div>
+ </div>
+ <div class="card" style="margin-top:14px">
+   <h2>Báo cáo theo khoảng ngày</h2>
+   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+     <input class="field" id="reportFrom" type="date" aria-label="Từ ngày">
+     <input class="field" id="reportTo" type="date" aria-label="Đến ngày">
+   </div>
+   <div class="row"><span>Doanh thu</span><strong id="rangeRevenue">0đ</strong></div>
+   <div class="row"><span>Số đơn</span><strong id="rangeOrders">0</strong></div>
  </div>
  <div class="card" style="margin-top:14px"><h2>Món bán chạy</h2><div id="bestSeller"></div></div>
 </section>
@@ -190,7 +207,7 @@ let products=[],orders=[],cart=[],currentCategory="Tất cả",unsubs=[],toastTi
 const $=id=>document.getElementById(id);
 const money=n=>Number(n||0).toLocaleString("vi-VN")+"đ";
 const safe=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
-const normalizeProduct=p=>({id:String(p.id),name:String(p.name||""),price:Number(p.price||0),category:String(p.category||"Khác")});
+const normalizeProduct=p=>({id:String(p.id),name:String(p.name||""),price:Number(p.price||0),category:String(p.category||"Khác"),active:p.active!==false});
 const normalizeOrder=o=>({...o,id:String(o.id),time:o.time||new Date().toISOString(),subtotal:Number(o.subtotal||0),discount:Number(o.discount||0),total:Number(o.total||0),items:Array.isArray(o.items)?o.items.map(i=>({...i,id:String(i.id),price:Number(i.price||0),qty:Number(i.qty||0)})):[]});
 
 function toast(msg){$("toast").textContent=msg;$("toast").classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>$("toast").classList.remove("show"),1400)}
@@ -204,7 +221,12 @@ $("logoutBtn").addEventListener("click",()=>signOut(auth));
 $("searchProduct").addEventListener("input",renderProducts);
 $("discount").addEventListener("input",renderCart);
 $("searchOrder").addEventListener("input",renderOrders);
+$("orderFrom").addEventListener("change",renderOrders);
+$("orderTo").addEventListener("change",renderOrders);
 $("searchCustomer").addEventListener("input",renderCustomers);
+$("reportFrom").addEventListener("change",renderReport);
+$("reportTo").addEventListener("change",renderReport);
+$("customerPhone").addEventListener("blur",fillKnownCustomer);
 $("checkoutBtn").addEventListener("click",checkout);
 $("addProductBtn").addEventListener("click",addProduct);
 $("closeReceiptBtn").addEventListener("click",closeReceipt);
@@ -285,7 +307,7 @@ function renderCategories(){
 
 function renderProducts(){
  const q=$("searchProduct").value.trim().toLocaleLowerCase("vi");
- const list=products.filter(p=>(currentCategory==="Tất cả"||p.category===currentCategory)&&p.name.toLocaleLowerCase("vi").includes(q));
+ const list=products.filter(p=>p.active!==false&&(currentCategory==="Tất cả"||p.category===currentCategory)&&p.name.toLocaleLowerCase("vi").includes(q));
  $("productGrid").innerHTML=list.length?list.map(p=>`<div class="product" data-id="${safe(p.id)}"><div class="product-name">${safe(p.name)}</div><div class="price">${money(p.price)}</div></div>`).join(""):`<div class="empty">Không tìm thấy món.</div>`;
  $("productGrid").querySelectorAll(".product").forEach(el=>el.addEventListener("click",()=>addToCart(el.dataset.id,el)));
 }
@@ -310,10 +332,23 @@ function renderCart(){
  $("mobileCart").textContent=`🛒 Giỏ hàng (${count})`;$("cartTitleCount").textContent=count?`(${count})`:"";
 }
 
+
+function localDateKey(value){
+ const d=new Date(value);if(Number.isNaN(d.getTime()))return "";
+ const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,"0"),day=String(d.getDate()).padStart(2,"0");
+ return `${y}-${m}-${day}`;
+}
+function activeOrders(){return orders.filter(o=>o.status!=="cancelled")}
+function fillKnownCustomer(){
+ const phone=$("customerPhone").value.trim();if(!phone||$("customerName").value.trim())return;
+ const found=orders.find(o=>o.status!=="cancelled"&&o.phone===phone&&o.customerName);
+ if(found)$("customerName").value=found.customerName;
+}
+
 async function checkout(){
  if(!cart.length){toast("Chưa có món trong đơn");return}
  const subtotal=cart.reduce((s,i)=>s+i.price*i.qty,0);let discount=Math.max(0,Number($("discount").value)||0);discount=Math.min(discount,subtotal);
- const order={id:"AN"+Date.now(),time:new Date().toISOString(),customerName:$("customerName").value.trim(),phone:$("customerPhone").value.trim(),note:$("note").value.trim(),items:cart.map(i=>({...i})),subtotal,discount,total:subtotal-discount,createdBy:auth.currentUser?.email||""};
+ const order={id:"AN"+Date.now(),time:new Date().toISOString(),customerName:$("customerName").value.trim(),phone:$("customerPhone").value.trim(),note:$("note").value.trim(),paymentMethod:$("paymentMethod").value,status:"paid",items:cart.map(i=>({...i})),subtotal,discount,total:subtotal-discount,createdBy:auth.currentUser?.email||""};
  $("checkoutBtn").disabled=true;$("checkoutBtn").textContent="ĐANG LƯU…";
  try{
   await setDoc(doc(db,"orders",order.id),order);
@@ -324,22 +359,43 @@ async function checkout(){
 
 function showReceipt(o){
  const d=new Date(o.time);
- $("receiptContent").innerHTML=`<div class="receipt"><h2>AN NAM</h2><div class="receipt-center"><strong>HÓA ĐƠN BÁN HÀNG</strong><br>Mã: ${safe(o.id.slice(-8))}<br>${d.toLocaleString("vi-VN")}</div>${o.customerName?`<div>Khách: ${safe(o.customerName)}</div>`:""}${o.phone?`<div>SĐT: ${safe(o.phone)}</div>`:""}<div class="receipt-line"></div><table class="receipt-table"><thead><tr><th>Món</th><th>SL</th><th>Đơn giá</th><th>Thành tiền</th></tr></thead><tbody>${o.items.map(i=>`<tr><td>${safe(i.name)}</td><td>${i.qty}</td><td>${money(i.price)}</td><td>${money(i.price*i.qty)}</td></tr>`).join("")}</tbody></table><div class="receipt-line"></div><div class="row"><span>Tạm tính</span><strong>${money(o.subtotal)}</strong></div><div class="row"><span>Giảm giá</span><strong>${money(o.discount)}</strong></div><div class="row"><strong>THANH TOÁN</strong><strong style="font-size:20px">${money(o.total)}</strong></div>${o.note?`<div style="margin-top:12px">Ghi chú: ${safe(o.note)}</div>`:""}<div class="receipt-line"></div><div class="receipt-center">Cảm ơn quý khách ❤️</div></div>`;
+ $("receiptContent").innerHTML=`<div class="receipt"><h2>AN NAM</h2><div class="receipt-center"><strong>HÓA ĐƠN BÁN HÀNG</strong><br>Mã: ${safe(o.id.slice(-8))}<br>${d.toLocaleString("vi-VN")}</div>${o.customerName?`<div>Khách: ${safe(o.customerName)}</div>`:""}${o.phone?`<div>SĐT: ${safe(o.phone)}</div>`:""}<div>Thanh toán: ${safe(o.paymentMethod||"Tiền mặt")}</div>${o.status==="cancelled"?`<div style="font-weight:900;color:#c93535;margin-top:5px">HÓA ĐƠN ĐÃ HỦY</div>`:""}<div class="receipt-line"></div><table class="receipt-table"><thead><tr><th>Món</th><th>SL</th><th>Đơn giá</th><th>Thành tiền</th></tr></thead><tbody>${o.items.map(i=>`<tr><td>${safe(i.name)}</td><td>${i.qty}</td><td>${money(i.price)}</td><td>${money(i.price*i.qty)}</td></tr>`).join("")}</tbody></table><div class="receipt-line"></div><div class="row"><span>Tạm tính</span><strong>${money(o.subtotal)}</strong></div><div class="row"><span>Giảm giá</span><strong>${money(o.discount)}</strong></div><div class="row"><strong>THANH TOÁN</strong><strong style="font-size:20px">${money(o.total)}</strong></div>${o.note?`<div style="margin-top:12px">Ghi chú: ${safe(o.note)}</div>`:""}<div class="receipt-line"></div><div class="receipt-center">Cảm ơn quý khách ❤️</div></div>`;
  $("receiptModal").classList.add("show");
 }
 function closeReceipt(){$("receiptModal").classList.remove("show")}
 
 function renderOrders(){
- const q=$("searchOrder").value.trim().toLocaleLowerCase("vi");
- const list=orders.filter(o=>[o.id,o.phone,o.customerName].some(v=>String(v||"").toLocaleLowerCase("vi").includes(q)));
- $("orderTable").innerHTML=list.length?list.map(o=>`<tr><td>${safe(o.id.slice(-8))}</td><td>${new Date(o.time).toLocaleString("vi-VN")}</td><td>${safe(o.phone||o.customerName||"-")}</td><td><strong>${money(o.total)}</strong></td><td><button class="action-btn primary" data-view="${safe(o.id)}">Xem</button></td></tr>`).join(""):`<tr><td colspan="5" class="empty">Chưa có hóa đơn.</td></tr>`;
+ const q=$("searchOrder").value.trim().toLocaleLowerCase("vi"),from=$("orderFrom").value,to=$("orderTo").value;
+ const list=orders.filter(o=>{
+   const key=localDateKey(o.time);
+   const text=[o.id,o.phone,o.customerName].some(v=>String(v||"").toLocaleLowerCase("vi").includes(q));
+   return text&&(!from||key>=from)&&(!to||key<=to);
+ });
+ $("orderTable").innerHTML=list.length?list.map(o=>`<tr style="${o.status==="cancelled"?"opacity:.55":""}"><td>${safe(o.id.slice(-8))}${o.status==="cancelled"?`<br><small style="color:#c93535;font-weight:800">ĐÃ HỦY</small>`:""}</td><td>${new Date(o.time).toLocaleString("vi-VN")}<br><small>${safe(o.paymentMethod||"Tiền mặt")}</small></td><td>${safe(o.phone||o.customerName||"-")}</td><td><strong>${money(o.total)}</strong></td><td><button class="action-btn primary" data-view="${safe(o.id)}">Xem</button>${o.status!=="cancelled"?`<button class="action-btn" data-editorder="${safe(o.id)}">Sửa</button><button class="action-btn danger" data-cancel="${safe(o.id)}">Hủy</button>`:""}</td></tr>`).join(""):`<tr><td colspan="5" class="empty">Chưa có hóa đơn.</td></tr>`;
  $("orderTable").querySelectorAll("[data-view]").forEach(b=>b.addEventListener("click",()=>{const o=orders.find(x=>x.id===b.dataset.view);if(o)showReceipt(o)}));
+ $("orderTable").querySelectorAll("[data-cancel]").forEach(b=>b.addEventListener("click",()=>cancelOrder(b.dataset.cancel)));
+ $("orderTable").querySelectorAll("[data-editorder]").forEach(b=>b.addEventListener("click",()=>editOrder(b.dataset.editorder)));
+}
+async function cancelOrder(id){
+ const o=orders.find(x=>x.id===id);if(!o||!confirm("Hủy hóa đơn này? Hóa đơn vẫn được giữ lại nhưng sẽ không tính doanh thu."))return;
+ try{await setDoc(doc(db,"orders",id),{...o,status:"cancelled",cancelledAt:new Date().toISOString(),cancelledBy:auth.currentUser?.email||""});toast("Đã hủy hóa đơn")}
+ catch(e){console.error(e);alert("Không hủy được hóa đơn.")}
+}
+async function editOrder(id){
+ const o=orders.find(x=>x.id===id);if(!o||o.status==="cancelled")return;
+ const name=prompt("Tên khách:",o.customerName||"");if(name===null)return;
+ const phone=prompt("Số điện thoại:",o.phone||"");if(phone===null)return;
+ const discountText=prompt("Giảm giá:",o.discount||0);if(discountText===null)return;
+ let discount=Math.max(0,Number(discountText)||0);discount=Math.min(discount,o.subtotal);
+ const method=prompt("Phương thức thanh toán (Tiền mặt / Chuyển khoản):",o.paymentMethod||"Tiền mặt");if(method===null)return;
+ try{await setDoc(doc(db,"orders",id),{...o,customerName:name.trim(),phone:phone.trim(),discount,total:o.subtotal-discount,paymentMethod:method.trim()||"Tiền mặt",editedAt:new Date().toISOString(),editedBy:auth.currentUser?.email||""});toast("✓ Đã sửa hóa đơn")}
+ catch(e){console.error(e);alert("Không sửa được hóa đơn.")}
 }
 
 async function addProduct(){
  const name=$("newName").value.trim(),price=Number($("newPrice").value),category=$("newCategory").value;
  if(!name||price<=0){toast("Nhập tên món và giá bán");return}
- const p={id:String(Date.now()),name,price,category};
+ const p={id:String(Date.now()),name,price,category,active:true};
  try{await setDoc(doc(db,"products",p.id),p);$("newName").value="";$("newPrice").value="";toast("✓ Đã thêm món")}
  catch(e){console.error(e);alert("Không thêm được món.")}
 }
@@ -347,8 +403,9 @@ async function editProduct(id){
  const p=products.find(x=>x.id===String(id));if(!p)return;
  const name=prompt("Tên món:",p.name);if(name===null)return;
  const price=prompt("Giá bán:",p.price);if(price===null)return;
- if(!name.trim()||Number(price)<=0){toast("Thông tin không hợp lệ");return}
- try{await setDoc(doc(db,"products",p.id),{...p,name:name.trim(),price:Number(price)});toast("✓ Đã sửa món")}
+ const category=prompt("Nhóm món:",p.category);if(category===null)return;
+ if(!name.trim()||Number(price)<=0||!category.trim()){toast("Thông tin không hợp lệ");return}
+ try{await setDoc(doc(db,"products",p.id),{...p,name:name.trim(),price:Number(price),category:category.trim()});toast("✓ Đã sửa món")}
  catch(e){console.error(e);alert("Không sửa được món.")}
 }
 async function deleteProductById(id){
@@ -356,14 +413,20 @@ async function deleteProductById(id){
  try{await deleteDoc(doc(db,"products",String(id)));toast("Đã xóa món")}
  catch(e){console.error(e);alert("Không xóa được món.")}
 }
+async function toggleProduct(id){
+ const p=products.find(x=>x.id===String(id));if(!p)return;
+ try{await setDoc(doc(db,"products",p.id),{...p,active:p.active===false});toast(p.active===false?"✓ Đã bật món":"Đã tạm ẩn món")}
+ catch(e){console.error(e);alert("Không thay đổi được trạng thái món.")}
+}
 function renderProductTable(){
- $("productTable").innerHTML=products.length?products.map(p=>`<tr><td><strong>${safe(p.name)}</strong></td><td>${safe(p.category)}</td><td>${money(p.price)}</td><td><button class="action-btn" data-edit="${safe(p.id)}">Sửa</button><button class="action-btn danger" data-delete="${safe(p.id)}">Xóa</button></td></tr>`).join(""):`<tr><td colspan="4" class="empty">Chưa có món.</td></tr>`;
+ $("productTable").innerHTML=products.length?products.map(p=>`<tr style="${p.active===false?"opacity:.55":""}"><td><strong>${safe(p.name)}</strong>${p.active===false?`<br><small>Đang ẩn</small>`:""}</td><td>${safe(p.category)}</td><td>${money(p.price)}</td><td><button class="action-btn" data-toggle="${safe(p.id)}">${p.active===false?"Bật":"Ẩn"}</button><button class="action-btn" data-edit="${safe(p.id)}">Sửa</button><button class="action-btn danger" data-delete="${safe(p.id)}">Xóa</button></td></tr>`).join(""):`<tr><td colspan="4" class="empty">Chưa có món.</td></tr>`;
+ $("productTable").querySelectorAll("[data-toggle]").forEach(b=>b.addEventListener("click",()=>toggleProduct(b.dataset.toggle)));
  $("productTable").querySelectorAll("[data-edit]").forEach(b=>b.addEventListener("click",()=>editProduct(b.dataset.edit)));
  $("productTable").querySelectorAll("[data-delete]").forEach(b=>b.addEventListener("click",()=>deleteProductById(b.dataset.delete)));
 }
 
 function getCustomers(){
- const map={};orders.forEach(o=>{if(!o.phone)return;if(!map[o.phone])map[o.phone]={phone:o.phone,name:o.customerName||"",orders:0,spent:0};map[o.phone].orders++;map[o.phone].spent+=o.total;if(o.customerName)map[o.phone].name=o.customerName});return Object.values(map).sort((a,b)=>b.spent-a.spent)
+ const map={};activeOrders().forEach(o=>{if(!o.phone)return;if(!map[o.phone])map[o.phone]={phone:o.phone,name:o.customerName||"",orders:0,spent:0};map[o.phone].orders++;map[o.phone].spent+=o.total;if(o.customerName)map[o.phone].name=o.customerName});return Object.values(map).sort((a,b)=>b.spent-a.spent)
 }
 function renderCustomers(){
  const q=$("searchCustomer").value.trim().toLocaleLowerCase("vi");
@@ -372,9 +435,18 @@ function renderCustomers(){
 }
 
 function renderReport(){
- const today=new Date().toLocaleDateString("vi-VN"),todayList=orders.filter(o=>new Date(o.time).toLocaleDateString("vi-VN")===today);
- $("todayRevenue").textContent=money(todayList.reduce((s,o)=>s+o.total,0));$("todayOrders").textContent=todayList.length;$("allRevenue").textContent=money(orders.reduce((s,o)=>s+o.total,0));
- const sales={};orders.forEach(o=>o.items.forEach(i=>sales[i.name]=(sales[i.name]||0)+i.qty));
+ const valid=activeOrders(),now=new Date(),today=localDateKey(now);
+ const monthPrefix=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
+ const todayList=valid.filter(o=>localDateKey(o.time)===today);
+ const monthList=valid.filter(o=>localDateKey(o.time).startsWith(monthPrefix));
+ $("todayRevenue").textContent=money(todayList.reduce((s,o)=>s+o.total,0));
+ $("todayOrders").textContent=todayList.length;
+ $("monthRevenue").textContent=money(monthList.reduce((s,o)=>s+o.total,0));
+ const from=$("reportFrom").value,to=$("reportTo").value;
+ const range=valid.filter(o=>{const k=localDateKey(o.time);return(!from||k>=from)&&(!to||k<=to)});
+ $("rangeRevenue").textContent=money(range.reduce((s,o)=>s+o.total,0));
+ $("rangeOrders").textContent=range.length;
+ const sales={};valid.forEach(o=>o.items.forEach(i=>sales[i.name]=(sales[i.name]||0)+i.qty));
  const sorted=Object.entries(sales).sort((a,b)=>b[1]-a[1]).slice(0,10);
  $("bestSeller").innerHTML=sorted.length?sorted.map(([n,q],i)=>`<div class="row" style="padding:10px 0;border-bottom:1px solid #edf2f6"><span>${i+1}. ${safe(n)}</span><strong>${q} phần</strong></div>`).join(""):`<div class="empty">Chưa có dữ liệu bán hàng.</div>`;
 }
