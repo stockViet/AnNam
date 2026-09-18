@@ -142,7 +142,7 @@ h2{font-size:20px;margin:0 0 14px;color:var(--navy)}
  <div class="card"><h2>Quản lý món</h2>
   <input class="field" id="newName" placeholder="Tên món">
   <input class="field" id="newPrice" type="number" inputmode="numeric" placeholder="Giá bán">
-  <select class="field" id="newCategory"><option>Cơm rang</option><option>Mỳ cay</option><option>Mỳ trộn</option><option>Ăn vặt</option></select>
+  <select class="field" id="newCategory"><option>Cơm rang</option><option>Mỳ cay</option><option>Mỳ trộn</option><option>Ăn vặt</option><option>Cafe &amp; Tea</option></select>
   <button id="addProductBtn" class="login-btn">+ THÊM MÓN</button>
  </div>
  <div class="card"><div id="productCards" class="mobile-record-list"></div><div class="desktop-table table-wrap"><table><thead><tr><th>Tên món</th><th>Nhóm</th><th>Giá</th><th></th></tr></thead><tbody id="productTable"></tbody></table></div></div>
@@ -250,7 +250,7 @@ $("customerPhone").addEventListener("blur",fillKnownCustomer);
 $("checkoutBtn").addEventListener("click",checkout);
 $("addProductBtn").addEventListener("click",addProduct);
 $("closeReceiptBtn").addEventListener("click",closeReceipt);
-$("printBtn").addEventListener("click",()=>window.print());
+$("printBtn").addEventListener("click",printReceipt);
 $("mobileCart").addEventListener("click",()=>{$("cartCard").scrollIntoView({behavior:"smooth",block:"start"})});
 document.querySelectorAll("nav button").forEach(btn=>btn.addEventListener("click",()=>showPage(btn.dataset.page,btn)));
 
@@ -383,6 +383,38 @@ function showReceipt(o){
  $("receiptModal").classList.add("show");
 }
 function closeReceipt(){$("receiptModal").classList.remove("show")}
+
+function printReceipt(){
+ const content=$("receiptContent").innerHTML;
+ if(!content){toast("Chưa có hóa đơn để in");return}
+ // Mở trang in ngay trong thao tác bấm để Safari iPhone không chặn popup.
+ const w=window.open("","_blank");
+ if(!w){
+  // Fallback nếu trình duyệt đang chặn cửa sổ mới.
+  window.print();
+  return;
+ }
+ const css=`
+  @page{size:80mm auto;margin:4mm}
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:#fff;color:#111}
+  body{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;width:72mm;margin:0 auto;font-size:12px}
+  .receipt h2{text-align:center;margin:4px 0 8px;font-size:20px}
+  .receipt-center{text-align:center;margin-bottom:10px}
+  .receipt-line{border-top:1px dashed #555;margin:10px 0}
+  .receipt-table{width:100%;border-collapse:collapse;table-layout:fixed}
+  .receipt-table th,.receipt-table td{font-size:10px;padding:5px 2px;white-space:normal;overflow-wrap:anywhere;background:#fff}
+  .receipt-table th:first-child,.receipt-table td:first-child{width:42%;text-align:left}
+  .receipt-table th:nth-child(2),.receipt-table td:nth-child(2){width:10%;text-align:center}
+  .receipt-table th:nth-child(3),.receipt-table td:nth-child(3){width:22%;text-align:right}
+  .receipt-table th:nth-child(4),.receipt-table td:nth-child(4){width:26%;text-align:right}
+  .row{display:flex;justify-content:space-between;gap:8px;margin:3px 0}
+  @media print{body{width:72mm}.no-print{display:none!important}}
+ `;
+ w.document.open();
+ w.document.write(`<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Hóa đơn An Nam</title><style>${css}</style></head><body>${content}<script>window.addEventListener('load',function(){setTimeout(function(){window.focus();window.print();},250)});<\/script></body></html>`);
+ w.document.close();
+}
 
 function renderOrders(){
  const q=$("searchOrder").value.trim().toLocaleLowerCase("vi"),from=$("orderFrom").value,to=$("orderTo").value;
