@@ -95,10 +95,6 @@ h2{font-size:20px;margin:0 0 14px;color:var(--navy)}
    <input class="field" id="customerPhone" inputmode="tel" placeholder="Số điện thoại khách">
    <input class="field" id="customerName" placeholder="Tên khách (không bắt buộc)">
    <input class="field" id="discount" type="number" min="0" inputmode="numeric" placeholder="Giảm giá (đ)">
-   <select class="field" id="paymentMethod">
-     <option value="Tiền mặt">💵 Tiền mặt</option>
-     <option value="Chuyển khoản">🏦 Chuyển khoản</option>
-   </select>
    <input class="field" id="note" placeholder="Ghi chú đơn hàng">
    <div class="row"><span>Tạm tính</span><strong id="subtotal">0đ</strong></div>
    <div class="row"><span>Giảm giá</span><strong id="discountView">0đ</strong></div>
@@ -348,7 +344,7 @@ function fillKnownCustomer(){
 async function checkout(){
  if(!cart.length){toast("Chưa có món trong đơn");return}
  const subtotal=cart.reduce((s,i)=>s+i.price*i.qty,0);let discount=Math.max(0,Number($("discount").value)||0);discount=Math.min(discount,subtotal);
- const order={id:"AN"+Date.now(),time:new Date().toISOString(),customerName:$("customerName").value.trim(),phone:$("customerPhone").value.trim(),note:$("note").value.trim(),paymentMethod:$("paymentMethod").value,status:"paid",items:cart.map(i=>({...i})),subtotal,discount,total:subtotal-discount,createdBy:auth.currentUser?.email||""};
+ const order={id:"AN"+Date.now(),time:new Date().toISOString(),customerName:$("customerName").value.trim(),phone:$("customerPhone").value.trim(),note:$("note").value.trim(),status:"paid",items:cart.map(i=>({...i})),subtotal,discount,total:subtotal-discount,createdBy:auth.currentUser?.email||""};
  $("checkoutBtn").disabled=true;$("checkoutBtn").textContent="ĐANG LƯU…";
  try{
   await setDoc(doc(db,"orders",order.id),order);
@@ -359,7 +355,7 @@ async function checkout(){
 
 function showReceipt(o){
  const d=new Date(o.time);
- $("receiptContent").innerHTML=`<div class="receipt"><h2>AN NAM</h2><div class="receipt-center"><strong>HÓA ĐƠN BÁN HÀNG</strong><br>Mã: ${safe(o.id.slice(-8))}<br>${d.toLocaleString("vi-VN")}</div>${o.customerName?`<div>Khách: ${safe(o.customerName)}</div>`:""}${o.phone?`<div>SĐT: ${safe(o.phone)}</div>`:""}<div>Thanh toán: ${safe(o.paymentMethod||"Tiền mặt")}</div>${o.status==="cancelled"?`<div style="font-weight:900;color:#c93535;margin-top:5px">HÓA ĐƠN ĐÃ HỦY</div>`:""}<div class="receipt-line"></div><table class="receipt-table"><thead><tr><th>Món</th><th>SL</th><th>Đơn giá</th><th>Thành tiền</th></tr></thead><tbody>${o.items.map(i=>`<tr><td>${safe(i.name)}</td><td>${i.qty}</td><td>${money(i.price)}</td><td>${money(i.price*i.qty)}</td></tr>`).join("")}</tbody></table><div class="receipt-line"></div><div class="row"><span>Tạm tính</span><strong>${money(o.subtotal)}</strong></div><div class="row"><span>Giảm giá</span><strong>${money(o.discount)}</strong></div><div class="row"><strong>THANH TOÁN</strong><strong style="font-size:20px">${money(o.total)}</strong></div>${o.note?`<div style="margin-top:12px">Ghi chú: ${safe(o.note)}</div>`:""}<div class="receipt-line"></div><div class="receipt-center">Cảm ơn quý khách ❤️</div></div>`;
+ $("receiptContent").innerHTML=`<div class="receipt"><h2>AN NAM</h2><div class="receipt-center"><strong>HÓA ĐƠN BÁN HÀNG</strong><br>Mã: ${safe(o.id.slice(-8))}<br>${d.toLocaleString("vi-VN")}</div>${o.customerName?`<div>Khách: ${safe(o.customerName)}</div>`:""}${o.phone?`<div>SĐT: ${safe(o.phone)}</div>`:""}${o.status==="cancelled"?`<div style="font-weight:900;color:#c93535;margin-top:5px">HÓA ĐƠN ĐÃ HỦY</div>`:""}<div class="receipt-line"></div><table class="receipt-table"><thead><tr><th>Món</th><th>SL</th><th>Đơn giá</th><th>Thành tiền</th></tr></thead><tbody>${o.items.map(i=>`<tr><td>${safe(i.name)}</td><td>${i.qty}</td><td>${money(i.price)}</td><td>${money(i.price*i.qty)}</td></tr>`).join("")}</tbody></table><div class="receipt-line"></div><div class="row"><span>Tạm tính</span><strong>${money(o.subtotal)}</strong></div><div class="row"><span>Giảm giá</span><strong>${money(o.discount)}</strong></div><div class="row"><strong>THANH TOÁN</strong><strong style="font-size:20px">${money(o.total)}</strong></div>${o.note?`<div style="margin-top:12px">Ghi chú: ${safe(o.note)}</div>`:""}<div class="receipt-line"></div><div class="receipt-center">Cảm ơn quý khách ❤️</div></div>`;
  $("receiptModal").classList.add("show");
 }
 function closeReceipt(){$("receiptModal").classList.remove("show")}
@@ -371,7 +367,7 @@ function renderOrders(){
    const text=[o.id,o.phone,o.customerName].some(v=>String(v||"").toLocaleLowerCase("vi").includes(q));
    return text&&(!from||key>=from)&&(!to||key<=to);
  });
- $("orderTable").innerHTML=list.length?list.map(o=>`<tr style="${o.status==="cancelled"?"opacity:.55":""}"><td>${safe(o.id.slice(-8))}${o.status==="cancelled"?`<br><small style="color:#c93535;font-weight:800">ĐÃ HỦY</small>`:""}</td><td>${new Date(o.time).toLocaleString("vi-VN")}<br><small>${safe(o.paymentMethod||"Tiền mặt")}</small></td><td>${safe(o.phone||o.customerName||"-")}</td><td><strong>${money(o.total)}</strong></td><td><button class="action-btn primary" data-view="${safe(o.id)}">Xem</button>${o.status!=="cancelled"?`<button class="action-btn" data-editorder="${safe(o.id)}">Sửa</button><button class="action-btn danger" data-cancel="${safe(o.id)}">Hủy</button>`:""}</td></tr>`).join(""):`<tr><td colspan="5" class="empty">Chưa có hóa đơn.</td></tr>`;
+ $("orderTable").innerHTML=list.length?list.map(o=>`<tr style="${o.status==="cancelled"?"opacity:.55":""}"><td>${safe(o.id.slice(-8))}${o.status==="cancelled"?`<br><small style="color:#c93535;font-weight:800">ĐÃ HỦY</small>`:""}</td><td>${new Date(o.time).toLocaleString("vi-VN")}</td><td>${safe(o.phone||o.customerName||"-")}</td><td><strong>${money(o.total)}</strong></td><td><button class="action-btn primary" data-view="${safe(o.id)}">Xem</button>${o.status!=="cancelled"?`<button class="action-btn" data-editorder="${safe(o.id)}">Sửa</button><button class="action-btn danger" data-cancel="${safe(o.id)}">Hủy</button>`:""}</td></tr>`).join(""):`<tr><td colspan="5" class="empty">Chưa có hóa đơn.</td></tr>`;
  $("orderTable").querySelectorAll("[data-view]").forEach(b=>b.addEventListener("click",()=>{const o=orders.find(x=>x.id===b.dataset.view);if(o)showReceipt(o)}));
  $("orderTable").querySelectorAll("[data-cancel]").forEach(b=>b.addEventListener("click",()=>cancelOrder(b.dataset.cancel)));
  $("orderTable").querySelectorAll("[data-editorder]").forEach(b=>b.addEventListener("click",()=>editOrder(b.dataset.editorder)));
@@ -387,8 +383,7 @@ async function editOrder(id){
  const phone=prompt("Số điện thoại:",o.phone||"");if(phone===null)return;
  const discountText=prompt("Giảm giá:",o.discount||0);if(discountText===null)return;
  let discount=Math.max(0,Number(discountText)||0);discount=Math.min(discount,o.subtotal);
- const method=prompt("Phương thức thanh toán (Tiền mặt / Chuyển khoản):",o.paymentMethod||"Tiền mặt");if(method===null)return;
- try{await setDoc(doc(db,"orders",id),{...o,customerName:name.trim(),phone:phone.trim(),discount,total:o.subtotal-discount,paymentMethod:method.trim()||"Tiền mặt",editedAt:new Date().toISOString(),editedBy:auth.currentUser?.email||""});toast("✓ Đã sửa hóa đơn")}
+ try{await setDoc(doc(db,"orders",id),{...o,customerName:name.trim(),phone:phone.trim(),discount,total:o.subtotal-discount,editedAt:new Date().toISOString(),editedBy:auth.currentUser?.email||""});toast("✓ Đã sửa hóa đơn")}
  catch(e){console.error(e);alert("Không sửa được hóa đơn.")}
 }
 
