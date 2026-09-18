@@ -75,6 +75,8 @@ h2{font-size:20px;margin:0 0 14px;color:var(--navy)}
 
 .mobile-record-list{display:none}.record-card{border:1px solid #e5edf4;border-radius:14px;padding:12px;margin-bottom:10px;background:#fff}.record-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.record-title{font-weight:850;color:#082f53;overflow-wrap:anywhere}.record-price{font-weight:900;color:#082f53;white-space:nowrap}.record-meta{font-size:12px;color:#607184;margin-top:5px;line-height:1.45}.record-actions{display:flex;gap:7px;margin-top:10px}.record-actions .action-btn{flex:1;margin:0}.record-card.cancelled{opacity:.58}
 @media(max-width:800px){.mobile-record-list{display:block}.desktop-table{display:none!important}}
+
+.size-editor{display:none;margin:7px 0 2px;padding:11px;border:1px solid var(--line);border-radius:12px;background:#f8fbfd}.size-editor.show{display:block}.size-editor-title{font-size:13px;font-weight:800;color:var(--navy);margin-bottom:8px}.size-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.size-box{background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px}.size-box label{display:flex;align-items:center;gap:5px;font-weight:800;font-size:13px;margin-bottom:5px}.size-price{width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 7px;font-size:14px}.size-choice-modal .modal-box{max-width:390px}.size-choice-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.size-choice{border:1px solid var(--line);background:#fff;border-radius:12px;padding:14px 6px;font-weight:900;color:var(--navy)}.size-choice small{display:block;color:var(--blue);margin-top:5px}.product-size-note{font-size:11px;color:#607184;margin-top:3px}
 @media(min-width:900px){.product-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}.product{min-height:82px;padding:11px}.product-name{font-size:14px}.price{font-size:14px}}
 @media print{body *{visibility:hidden}.modal,.modal *{visibility:visible}.modal{position:absolute;inset:0;background:#fff;padding:0}.modal-box{max-width:none;width:100%;box-shadow:none}.modal-actions{display:none}}
 </style>
@@ -142,7 +144,16 @@ h2{font-size:20px;margin:0 0 14px;color:var(--navy)}
  <div class="card"><h2>Quản lý món</h2>
   <input class="field" id="newName" placeholder="Tên món">
   <input class="field" id="newPrice" type="number" inputmode="numeric" placeholder="Giá bán">
-  <select class="field" id="newCategory"><option>Cơm rang</option><option>Mỳ cay</option><option>Mỳ trộn</option><option>Ăn vặt</option><option>Cafe &amp; Tea</option></select>
+  <select class="field" id="newCategory"><option>Cơm rang</option><option>Mỳ cay</option><option>Mỳ trộn</option><option>Ăn vặt</option><option>Cafe &amp; Tea</option><option>Topping Đồ Ăn</option><option>Topping Nước</option></select>
+  <div id="sizeEditor" class="size-editor">
+   <div class="size-editor-title">Giá theo size (Cafe &amp; Tea)</div>
+   <div class="size-grid">
+    <div class="size-box"><label><input id="sizeSEnabled" type="checkbox"> Size S</label><input id="sizeSPrice" class="size-price" type="number" inputmode="numeric" placeholder="Giá S"></div>
+    <div class="size-box"><label><input id="sizeMEnabled" type="checkbox"> Size M</label><input id="sizeMPrice" class="size-price" type="number" inputmode="numeric" placeholder="Giá M"></div>
+    <div class="size-box"><label><input id="sizeLEnabled" type="checkbox"> Size L</label><input id="sizeLPrice" class="size-price" type="number" inputmode="numeric" placeholder="Giá L"></div>
+   </div>
+   <div style="font-size:12px;color:#607184;margin-top:7px">Chỉ bật những size món này có. Giá bán phía trên có thể để trống khi dùng giá theo size.</div>
+  </div>
   <button id="addProductBtn" class="login-btn">+ THÊM MÓN</button>
  </div>
  <div class="card"><div id="productCards" class="mobile-record-list"></div><div class="desktop-table table-wrap"><table><thead><tr><th>Tên món</th><th>Nhóm</th><th>Giá</th><th></th></tr></thead><tbody id="productTable"></tbody></table></div></div>
@@ -177,6 +188,7 @@ h2{font-size:20px;margin:0 0 14px;color:var(--navy)}
 <div id="toast" class="toast"></div>
 
 <div class="modal" id="receiptModal"><div class="modal-box"><div id="receiptContent"></div><div class="modal-actions"><button id="printBtn" class="print-btn">🖨 In hóa đơn</button><button id="closeReceiptBtn" class="close-btn">Đóng</button></div></div></div>
+<div class="modal size-choice-modal" id="sizeModal"><div class="modal-box"><h2 id="sizeModalTitle">Chọn size</h2><div id="sizeChoices" class="size-choice-grid"></div><button id="closeSizeBtn" class="close-btn" style="width:100%;margin-top:12px">Đóng</button></div></div>
 </div>
 
 <script type="module">
@@ -227,7 +239,7 @@ let products=[],orders=[],cart=[],currentCategory="Tất cả",unsubs=[],toastTi
 const $=id=>document.getElementById(id);
 const money=n=>Number(n||0).toLocaleString("vi-VN")+"đ";
 const safe=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
-const normalizeProduct=p=>({id:String(p.id),name:String(p.name||""),price:Number(p.price||0),category:String(p.category||"Khác"),active:p.active!==false});
+const normalizeProduct=p=>({id:String(p.id),name:String(p.name||""),price:Number(p.price||0),category:String(p.category||"Khác"),active:p.active!==false,sizes:(p.sizes&&typeof p.sizes==="object")?Object.fromEntries(Object.entries(p.sizes).filter(([k,v])=>["S","M","L"].includes(k)&&Number(v)>0).map(([k,v])=>[k,Number(v)])): {}});
 const normalizeOrder=o=>({...o,id:String(o.id),time:o.time||new Date().toISOString(),subtotal:Number(o.subtotal||0),discount:Number(o.discount||0),total:Number(o.total||0),items:Array.isArray(o.items)?o.items.map(i=>({...i,id:String(i.id),price:Number(i.price||0),qty:Number(i.qty||0)})):[]});
 
 function toast(msg){$("toast").textContent=msg;$("toast").classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>$("toast").classList.remove("show"),1400)}
@@ -249,10 +261,13 @@ $("reportTo").addEventListener("change",renderReport);
 $("customerPhone").addEventListener("blur",fillKnownCustomer);
 $("checkoutBtn").addEventListener("click",checkout);
 $("addProductBtn").addEventListener("click",addProduct);
+$("newCategory").addEventListener("change",updateSizeEditor);
+$("closeSizeBtn").addEventListener("click",()=>$("sizeModal").classList.remove("show"));
 $("closeReceiptBtn").addEventListener("click",closeReceipt);
 $("printBtn").addEventListener("click",printReceipt);
 $("mobileCart").addEventListener("click",()=>{$("cartCard").scrollIntoView({behavior:"smooth",block:"start"})});
 document.querySelectorAll("nav button").forEach(btn=>btn.addEventListener("click",()=>showPage(btn.dataset.page,btn)));
+updateSizeEditor();
 
 async function login(){
  const email=$("loginEmail").value.trim(),password=$("loginPassword").value;
@@ -319,30 +334,49 @@ function showPage(id,btn){
 }
 
 function renderCategories(){
- const cats=["Tất cả",...new Set(products.map(p=>p.category))];
+ const fixedCats=["Cơm rang","Mỳ cay","Mỳ trộn","Ăn vặt","Cafe & Tea","Topping Đồ Ăn","Topping Nước"];
+ const cats=["Tất cả",...new Set([...fixedCats,...products.map(p=>p.category)])];
  if(!cats.includes(currentCategory))currentCategory="Tất cả";
  $("categories").innerHTML=cats.map(c=>`<button class="${c===currentCategory?"active":""}" data-cat="${safe(c)}">${safe(c)}</button>`).join("");
  $("categories").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{currentCategory=b.dataset.cat;renderCategories();renderProducts()}));
 }
 
+function productPriceLabel(p){
+ const vals=Object.values(p.sizes||{}).map(Number).filter(v=>v>0);
+ if(p.category==="Cafe & Tea"&&vals.length)return vals.length===1?money(vals[0]):`${money(Math.min(...vals))} – ${money(Math.max(...vals))}`;
+ return money(p.price);
+}
 function renderProducts(){
  const q=$("searchProduct").value.trim().toLocaleLowerCase("vi");
  const list=products.filter(p=>p.active!==false&&(currentCategory==="Tất cả"||p.category===currentCategory)&&p.name.toLocaleLowerCase("vi").includes(q));
- $("productGrid").innerHTML=list.length?list.map(p=>`<div class="product" data-id="${safe(p.id)}"><div class="product-name">${safe(p.name)}</div><div class="price">${money(p.price)}</div></div>`).join(""):`<div class="empty">Không tìm thấy món.</div>`;
+ $("productGrid").innerHTML=list.length?list.map(p=>`<div class="product" data-id="${safe(p.id)}"><div class="product-name">${safe(p.name)}</div><div class="price">${safe(productPriceLabel(p))}</div>${p.category==="Cafe & Tea"&&Object.keys(p.sizes||{}).length?`<div class="product-size-note">Chọn size khi thêm</div>`:""}</div>`).join(""):`<div class="empty">Không tìm thấy món.</div>`;
  $("productGrid").querySelectorAll(".product").forEach(el=>el.addEventListener("click",()=>addToCart(el.dataset.id,el)));
 }
 
 function addToCart(id,el){
  const p=products.find(x=>x.id===String(id));if(!p)return;
- const item=cart.find(x=>x.id===p.id);if(item)item.qty++;else cart.push({...p,qty:1});
  if(el){el.classList.add("pressed");setTimeout(()=>el.classList.remove("pressed"),180)}
- renderCart();toast("✓ Đã thêm "+p.name);
+ const sizes=p.category==="Cafe & Tea"?Object.entries(p.sizes||{}).filter(([,v])=>Number(v)>0):[];
+ if(sizes.length){
+  $("sizeModalTitle").textContent=p.name+" – Chọn size";
+  $("sizeChoices").innerHTML=sizes.map(([size,price])=>`<button class="size-choice" data-size="${size}" data-price="${Number(price)}">${size}<small>${money(price)}</small></button>`).join("");
+  $("sizeChoices").querySelectorAll(".size-choice").forEach(b=>b.addEventListener("click",()=>{addSizedItem(p,b.dataset.size,Number(b.dataset.price));$("sizeModal").classList.remove("show")}));
+  $("sizeModal").classList.add("show");return;
+ }
+ addSizedItem(p,"",p.price);
 }
-function changeQty(id,n){const i=cart.find(x=>x.id===String(id));if(!i)return;i.qty+=n;if(i.qty<=0)cart=cart.filter(x=>x.id!==String(id));renderCart()}
-function removeCart(id){cart=cart.filter(x=>x.id!==String(id));renderCart()}
+function addSizedItem(p,size,price){
+ const cartId=size?`${p.id}__${size}`:p.id;
+ const item=cart.find(x=>x.cartId===cartId);
+ if(item)item.qty++;else cart.push({...p,cartId,size,price:Number(price),qty:1});
+ renderCart();toast(`✓ Đã thêm ${p.name}${size?` size ${size}`:""}`);
+}
+
+function changeQty(id,n){const i=cart.find(x=>(x.cartId||x.id)===String(id));if(!i)return;i.qty+=n;if(i.qty<=0)cart=cart.filter(x=>(x.cartId||x.id)!==String(id));renderCart()}
+function removeCart(id){cart=cart.filter(x=>(x.cartId||x.id)!==String(id));renderCart()}
 
 function renderCart(){
- $("cart").innerHTML=cart.length?cart.map(i=>`<div class="cart-item"><div class="cart-top"><strong>${safe(i.name)}</strong><button class="remove" data-remove="${safe(i.id)}">Xóa</button></div><div class="qty"><button data-minus="${safe(i.id)}">−</button><strong>${i.qty}</strong><button data-plus="${safe(i.id)}">+</button><span style="margin-left:auto">${money(i.price*i.qty)}</span></div></div>`).join(""):`<div class="empty">Chưa có món nào trong đơn</div>`;
+ $("cart").innerHTML=cart.length?cart.map(i=>`<div class="cart-item"><div class="cart-top"><strong>${safe(i.name)}${i.size?` · Size ${safe(i.size)}`:""}</strong><button class="remove" data-remove="${safe(i.cartId||i.id)}">Xóa</button></div><div class="qty"><button data-minus="${safe(i.cartId||i.id)}">−</button><strong>${i.qty}</strong><button data-plus="${safe(i.cartId||i.id)}">+</button><span style="margin-left:auto">${money(i.price*i.qty)}</span></div></div>`).join(""):`<div class="empty">Chưa có món nào trong đơn</div>`;
  $("cart").querySelectorAll("[data-minus]").forEach(b=>b.addEventListener("click",()=>changeQty(b.dataset.minus,-1)));
  $("cart").querySelectorAll("[data-plus]").forEach(b=>b.addEventListener("click",()=>changeQty(b.dataset.plus,1)));
  $("cart").querySelectorAll("[data-remove]").forEach(b=>b.addEventListener("click",()=>removeCart(b.dataset.remove)));
@@ -379,7 +413,7 @@ async function checkout(){
 
 function showReceipt(o){
  const d=new Date(o.time);
- $("receiptContent").innerHTML=`<div class="receipt"><h2>AN NAM</h2><div class="receipt-center"><strong>HÓA ĐƠN BÁN HÀNG</strong><br>Mã: ${safe(o.id.slice(-8))}<br>${d.toLocaleString("vi-VN")}</div>${o.customerName?`<div>Khách: ${safe(o.customerName)}</div>`:""}${o.phone?`<div>SĐT: ${safe(o.phone)}</div>`:""}${o.status==="cancelled"?`<div style="font-weight:900;color:#c93535;margin-top:5px">HÓA ĐƠN ĐÃ HỦY</div>`:""}<div class="receipt-line"></div><table class="receipt-table"><thead><tr><th>Món</th><th>SL</th><th>Đơn giá</th><th>Thành tiền</th></tr></thead><tbody>${o.items.map(i=>`<tr><td>${safe(i.name)}</td><td>${i.qty}</td><td>${money(i.price)}</td><td>${money(i.price*i.qty)}</td></tr>`).join("")}</tbody></table><div class="receipt-line"></div><div class="row"><span>Tạm tính</span><strong>${money(o.subtotal)}</strong></div><div class="row"><span>Giảm giá</span><strong>${money(o.discount)}</strong></div><div class="row"><strong>THANH TOÁN</strong><strong style="font-size:20px">${money(o.total)}</strong></div>${o.note?`<div style="margin-top:12px">Ghi chú: ${safe(o.note)}</div>`:""}<div class="receipt-line"></div><div class="receipt-center">Cảm ơn quý khách ❤️</div></div>`;
+ $("receiptContent").innerHTML=`<div class="receipt"><h2>AN NAM</h2><div class="receipt-center">Hotline: 0942.947.111<br>Đ.c: 163 Nguyễn Du - TPLS</div><div class="receipt-line"></div><div class="receipt-center"><strong>HÓA ĐƠN BÁN HÀNG</strong><br>Mã: ${safe(o.id.slice(-8))}<br>${d.toLocaleString("vi-VN")}</div>${o.customerName?`<div>Khách: ${safe(o.customerName)}</div>`:""}${o.phone?`<div>SĐT: ${safe(o.phone)}</div>`:""}${o.status==="cancelled"?`<div style="font-weight:900;color:#c93535;margin-top:5px">HÓA ĐƠN ĐÃ HỦY</div>`:""}<div class="receipt-line"></div><table class="receipt-table"><thead><tr><th>Món</th><th>SL</th><th>Đơn giá</th><th>Thành tiền</th></tr></thead><tbody>${o.items.map(i=>`<tr><td>${safe(i.name)}${i.size?`<br><small>Size ${safe(i.size)}</small>`:""}</td><td>${i.qty}</td><td>${money(i.price)}</td><td>${money(i.price*i.qty)}</td></tr>`).join("")}</tbody></table><div class="receipt-line"></div><div class="row"><span>Tạm tính</span><strong>${money(o.subtotal)}</strong></div><div class="row"><span>Giảm giá</span><strong>${money(o.discount)}</strong></div><div class="row"><strong>THANH TOÁN</strong><strong style="font-size:20px">${money(o.total)}</strong></div>${o.note?`<div style="margin-top:12px">Ghi chú: ${safe(o.note)}</div>`:""}<div class="receipt-line"></div><div class="receipt-center">Cảm ơn quý khách ❤️</div></div>`;
  $("receiptModal").classList.add("show");
 }
 function closeReceipt(){$("receiptModal").classList.remove("show")}
@@ -447,22 +481,42 @@ async function editOrder(id){
  catch(e){console.error(e);alert("Không sửa được hóa đơn.")}
 }
 
+function updateSizeEditor(){
+ const show=$("newCategory").value==="Cafe & Tea";$("sizeEditor").classList.toggle("show",show);$("newPrice").placeholder=show?"Giá chung (không bắt buộc nếu có size)":"Giá bán";
+}
+function readSizes(){
+ const out={};for(const z of ["S","M","L"]){if($("size"+z+"Enabled").checked){const v=Number($("size"+z+"Price").value);if(v>0)out[z]=v}}return out;
+}
+function clearSizeEditor(){for(const z of ["S","M","L"]){$("size"+z+"Enabled").checked=false;$("size"+z+"Price").value=""}updateSizeEditor()}
 async function addProduct(){
- const name=$("newName").value.trim(),price=Number($("newPrice").value),category=$("newCategory").value;
- if(!name||price<=0){toast("Nhập tên món và giá bán");return}
- const p={id:String(Date.now()),name,price,category,active:true};
- try{await setDoc(doc(db,"products",p.id),p);$("newName").value="";$("newPrice").value="";toast("✓ Đã thêm món")}
+ const name=$("newName").value.trim(),category=$("newCategory").value,sizes=category==="Cafe & Tea"?readSizes():{},price=Number($("newPrice").value)||0;
+ if(!name){toast("Nhập tên món");return}
+ if(category==="Cafe & Tea"&&!Object.keys(sizes).length&&price<=0){toast("Nhập giá hoặc ít nhất 1 size");return}
+ if(category!=="Cafe & Tea"&&price<=0){toast("Nhập giá bán");return}
+ const basePrice=price>0?price:(sizes.M||sizes.S||sizes.L||0);
+ const p={id:String(Date.now()),name,price:basePrice,category,active:true,sizes};
+ try{await setDoc(doc(db,"products",p.id),p);$("newName").value="";$("newPrice").value="";clearSizeEditor();toast("✓ Đã thêm món")}
  catch(e){console.error(e);alert("Không thêm được món.")}
 }
 async function editProduct(id){
  const p=products.find(x=>x.id===String(id));if(!p)return;
  const name=prompt("Tên món:",p.name);if(name===null)return;
- const price=prompt("Giá bán:",p.price);if(price===null)return;
- const category=prompt("Nhóm món:",p.category);if(category===null)return;
- if(!name.trim()||Number(price)<=0||!category.trim()){toast("Thông tin không hợp lệ");return}
- try{await setDoc(doc(db,"products",p.id),{...p,name:name.trim(),price:Number(price),category:category.trim()});toast("✓ Đã sửa món")}
+ const category=prompt("Nhóm món (Cơm rang / Mỳ cay / Mỳ trộn / Ăn vặt / Cafe & Tea / Topping Đồ Ăn / Topping Nước):",p.category);if(category===null)return;
+ if(!name.trim()||!category.trim()){toast("Thông tin không hợp lệ");return}
+ let sizes={...p.sizes},price=p.price;
+ if(category.trim()==="Cafe & Tea"){
+  const s=prompt("Giá Size S (để trống nếu không có):",sizes.S||"");if(s===null)return;
+  const m=prompt("Giá Size M (để trống nếu không có):",sizes.M||"");if(m===null)return;
+  const l=prompt("Giá Size L (để trống nếu không có):",sizes.L||"");if(l===null)return;
+  sizes={};if(Number(s)>0)sizes.S=Number(s);if(Number(m)>0)sizes.M=Number(m);if(Number(l)>0)sizes.L=Number(l);
+  if(!Object.keys(sizes).length){const one=prompt("Món không có size. Nhập giá bán:",p.price);if(one===null)return;if(Number(one)<=0){toast("Giá không hợp lệ");return}price=Number(one)}else price=sizes.M||sizes.S||sizes.L;
+ }else{
+  sizes={};const one=prompt("Giá bán:",p.price);if(one===null)return;if(Number(one)<=0){toast("Giá không hợp lệ");return}price=Number(one);
+ }
+ try{await setDoc(doc(db,"products",p.id),{...p,name:name.trim(),price,category:category.trim(),sizes});toast("✓ Đã sửa món")}
  catch(e){console.error(e);alert("Không sửa được món.")}
 }
+
 async function deleteProductById(id){
  if(!confirm("Xóa món này?"))return;
  try{await deleteDoc(doc(db,"products",String(id)));toast("Đã xóa món")}
@@ -474,11 +528,11 @@ async function toggleProduct(id){
  catch(e){console.error(e);alert("Không thay đổi được trạng thái món.")}
 }
 function renderProductTable(){
- $("productCards").innerHTML=products.length?products.map(p=>`<div class="record-card ${p.active===false?"cancelled":""}"><div class="record-top"><div><div class="record-title">${safe(p.name)}</div><div class="record-meta">${safe(p.category)}${p.active===false?` · <b>Đang ẩn</b>`:""}</div></div><div class="record-price">${money(p.price)}</div></div><div class="record-actions"><button class="action-btn" data-mtoggle="${safe(p.id)}">${p.active===false?"Bật":"Ẩn"}</button><button class="action-btn" data-mpedit="${safe(p.id)}">Sửa</button><button class="action-btn danger" data-mpdelete="${safe(p.id)}">Xóa</button></div></div>`).join(""):`<div class="empty">Chưa có món.</div>`;
+ $("productCards").innerHTML=products.length?products.map(p=>`<div class="record-card ${p.active===false?"cancelled":""}"><div class="record-top"><div><div class="record-title">${safe(p.name)}</div><div class="record-meta">${safe(p.category)}${p.active===false?` · <b>Đang ẩn</b>`:""}</div></div><div class="record-price">${safe(productPriceLabel(p))}</div></div><div class="record-actions"><button class="action-btn" data-mtoggle="${safe(p.id)}">${p.active===false?"Bật":"Ẩn"}</button><button class="action-btn" data-mpedit="${safe(p.id)}">Sửa</button><button class="action-btn danger" data-mpdelete="${safe(p.id)}">Xóa</button></div></div>`).join(""):`<div class="empty">Chưa có món.</div>`;
  $("productCards").querySelectorAll("[data-mtoggle]").forEach(b=>b.addEventListener("click",()=>toggleProduct(b.dataset.mtoggle)));
  $("productCards").querySelectorAll("[data-mpedit]").forEach(b=>b.addEventListener("click",()=>editProduct(b.dataset.mpedit)));
  $("productCards").querySelectorAll("[data-mpdelete]").forEach(b=>b.addEventListener("click",()=>deleteProductById(b.dataset.mpdelete)));
- $("productTable").innerHTML=products.length?products.map(p=>`<tr style="${p.active===false?"opacity:.55":""}"><td><strong>${safe(p.name)}</strong>${p.active===false?`<br><small>Đang ẩn</small>`:""}</td><td>${safe(p.category)}</td><td>${money(p.price)}</td><td><button class="action-btn" data-toggle="${safe(p.id)}">${p.active===false?"Bật":"Ẩn"}</button><button class="action-btn" data-edit="${safe(p.id)}">Sửa</button><button class="action-btn danger" data-delete="${safe(p.id)}">Xóa</button></td></tr>`).join(""):`<tr><td colspan="4" class="empty">Chưa có món.</td></tr>`;
+ $("productTable").innerHTML=products.length?products.map(p=>`<tr style="${p.active===false?"opacity:.55":""}"><td><strong>${safe(p.name)}</strong>${p.active===false?`<br><small>Đang ẩn</small>`:""}</td><td>${safe(p.category)}</td><td>${safe(productPriceLabel(p))}</td><td><button class="action-btn" data-toggle="${safe(p.id)}">${p.active===false?"Bật":"Ẩn"}</button><button class="action-btn" data-edit="${safe(p.id)}">Sửa</button><button class="action-btn danger" data-delete="${safe(p.id)}">Xóa</button></td></tr>`).join(""):`<tr><td colspan="4" class="empty">Chưa có món.</td></tr>`;
  $("productTable").querySelectorAll("[data-toggle]").forEach(b=>b.addEventListener("click",()=>toggleProduct(b.dataset.toggle)));
  $("productTable").querySelectorAll("[data-edit]").forEach(b=>b.addEventListener("click",()=>editProduct(b.dataset.edit)));
  $("productTable").querySelectorAll("[data-delete]").forEach(b=>b.addEventListener("click",()=>deleteProductById(b.dataset.delete)));
